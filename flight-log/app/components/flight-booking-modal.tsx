@@ -41,6 +41,45 @@ interface FlightBookingModalProps {
   dispatch: React.Dispatch<BookingAction>;
 }
 
+interface CabinClassOption {
+  name: string;
+  description: string;
+  priceMultiplier: number;
+  features: string[];
+  icon: string;
+}
+
+const cabinClasses: CabinClassOption[] = [
+  {
+    name: 'Economy',
+    description: 'Standard seating with essential amenities',
+    priceMultiplier: 1.0,
+    features: ['Standard seat', 'Carry-on luggage', 'In-flight entertainment'],
+    icon: '💺'
+  },
+  {
+    name: 'Premium Economy',
+    description: 'Enhanced comfort with extra legroom',
+    priceMultiplier: 1.4,
+    features: ['Extra legroom', 'Priority boarding', 'Enhanced meal service'],
+    icon: '🪑'
+  },
+  {
+    name: 'Business',
+    description: 'Premium experience with lie-flat seats',
+    priceMultiplier: 2.5,
+    features: ['Lie-flat seats', 'Priority check-in', 'Lounge access', 'Premium dining'],
+    icon: '💼'
+  },
+  {
+    name: 'First Class',
+    description: 'Ultimate luxury with private suites',
+    priceMultiplier: 4.0,
+    features: ['Private suite', 'Concierge service', 'Exclusive lounges', 'Gourmet dining'],
+    icon: '👑'
+  }
+];
+
 function ProviderCard({ 
   provider, 
   price, 
@@ -100,295 +139,174 @@ function ProviderCard({
   )
 }
 
-function BookingDetailsForm({ 
+function CabinClassSelector({ 
   flight, 
-  provider, 
-  bookingData, 
-  onUpdateData, 
-  onSubmit 
+  selectedCabinClass, 
+  onSelectCabinClass 
 }: { 
   flight: AlternativeFlight; 
-  provider: BookingProvider; 
-  bookingData: Partial<BookingRequest>; 
-  onUpdateData: (data: Partial<BookingRequest>) => void; 
-  onSubmit: () => void;
+  selectedCabinClass: CabinClassOption | null; 
+  onSelectCabinClass: (cabinClass: CabinClassOption) => void;
 }) {
-  const [isValid, setIsValid] = useState(false);
-
-  useEffect(() => {
-    const valid = !!(
-      bookingData.passengers &&
-      bookingData.cabinClass &&
-      bookingData.contactInfo?.email &&
-      bookingData.contactInfo.email.trim() !== ''
-    );
-    setIsValid(valid);
-  }, [bookingData]);
-
   return (
-    <div className="space-y-6">
-      {/* Flight Summary */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold">{flight.airline} {flight.id}</h4>
-              <p className="text-sm text-gray-600">
-                {flight.departure} → {flight.arrival}
-              </p>
-              <p className="text-xs text-gray-500">
-                {flight.departureTime} - {flight.arrivalTime}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-green-600">
-                {formatPrice(flight.price)}
-              </div>
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${getRiskLevelColor(flight.riskScore)}`}
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Select Cabin Class</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {cabinClasses.map((cabinClass) => {
+            const price = Math.round(flight.price * cabinClass.priceMultiplier);
+            const isSelected = selectedCabinClass?.name === cabinClass.name;
+            
+            return (
+              <Card 
+                key={cabinClass.name}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                }`}
+                onClick={() => onSelectCabinClass(cabinClass)}
               >
-                {getRiskLevelText(flight.riskScore)}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Provider Info */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{provider.logo}</span>
-            <div>
-              <h4 className="font-semibold">Booking through {provider.name}</h4>
-              <p className="text-sm text-gray-600">
-                {provider.features.join(' • ')}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Booking Form */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Number of Passengers
-          </label>
-          <Input
-            type="number"
-            min="1"
-            max="9"
-            value={bookingData.passengers || ''}
-            onChange={(e) => onUpdateData({ passengers: parseInt(e.target.value) || 1 })}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cabin Class
-          </label>
-          <select
-            value={bookingData.cabinClass || 'economy'}
-            onChange={(e) => onUpdateData({ cabinClass: e.target.value as any })}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          >
-            <option value="economy">Economy</option>
-            <option value="premium_economy">Premium Economy</option>
-            <option value="business">Business</option>
-            <option value="first">First Class</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email Address
-          </label>
-          <Input
-            type="email"
-            value={bookingData.contactInfo?.email || ''}
-            onChange={(e) => onUpdateData({ 
-              contactInfo: { 
-                email: e.target.value,
-                phone: bookingData.contactInfo?.phone 
-              }
-            })}
-            className="w-full"
-            placeholder="your.email@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number (Optional)
-          </label>
-          <Input
-            type="tel"
-            value={bookingData.contactInfo?.phone || ''}
-            onChange={(e) => onUpdateData({ 
-              contactInfo: { 
-                email: bookingData.contactInfo?.email || '',
-                phone: e.target.value 
-              }
-            })}
-            className="w-full"
-            placeholder="+1 (555) 123-4567"
-          />
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{cabinClass.icon}</span>
+                      <div>
+                        <h4 className="font-semibold">{cabinClass.name}</h4>
+                        <p className="text-sm text-gray-600">{cabinClass.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-600">
+                        {formatPrice(price)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {cabinClass.features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
-
-      <Button 
-        onClick={onSubmit} 
-        disabled={!isValid}
-        className="w-full"
-      >
-        <CreditCard className="h-4 w-4 mr-2" />
-        Complete Booking
-      </Button>
     </div>
   )
 }
 
-function BookingConfirmation({ 
+function ExternalBookingOptions({ 
   flight, 
   provider, 
-  bookingData, 
-  bookingResult 
+  cabinClass 
 }: { 
   flight: AlternativeFlight; 
   provider: BookingProvider; 
-  bookingData: Partial<BookingRequest>; 
-  bookingResult: any;
+  cabinClass: CabinClassOption;
 }) {
-  if (bookingResult?.success) {
-    return (
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        
-        <div>
-          <h3 className="text-xl font-semibold text-green-800">Booking Confirmed!</h3>
-          <p className="text-gray-600">Your flight has been successfully booked.</p>
-        </div>
+  const [bookingService] = useState(() => new FlightBookingService());
+  const [bookingUrls, setBookingUrls] = useState<Array<{ provider: BookingProvider; url: string; price: number }>>([]);
 
-        <Card>
+  useEffect(() => {
+    const urls = bookingService.getBookingUrls(flight);
+    setBookingUrls(urls);
+  }, [flight, bookingService]);
+
+  const handleExternalBooking = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  const selectedProviderUrls = bookingUrls.filter(b => b.provider.name === provider.name);
+  const basePrice = flight.price * cabinClass.priceMultiplier;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Book on {provider.name}</h3>
+        
+        {/* Flight Summary */}
+        <Card className="mb-4">
           <CardContent className="p-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Booking ID:</span>
-                <span className="font-mono font-medium">{bookingResult.bookingId}</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold">{flight.airline} {flight.id}</h4>
+                <p className="text-sm text-gray-600">
+                  {flight.departure} → {flight.arrival}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {flight.departureTime} - {flight.arrivalTime}
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span>Confirmation Code:</span>
-                <span className="font-mono font-medium">{bookingResult.confirmationCode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total Price:</span>
-                <span className="font-medium">{formatPrice(bookingResult.price || 0)}</span>
+              <div className="text-right">
+                <div className="text-lg font-bold text-green-600">
+                  {formatPrice(basePrice)}
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {cabinClass.name}
+                </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="text-xs text-gray-500">
-          A confirmation email has been sent to {bookingData.contactInfo?.email}
+        {/* External Booking Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={() => handleExternalBooking(selectedProviderUrls[0]?.url || provider.baseUrl)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            size="lg"
+          >
+            <ExternalLink className="h-5 w-5 mr-2" />
+            Book {cabinClass.name} on {provider.name}
+          </Button>
+          
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">Or try other providers:</p>
+            <div className="flex gap-2 justify-center">
+              {bookingProviders.slice(0, 3).map((altProvider) => {
+                if (altProvider.name === provider.name) return null;
+                const altUrl = bookingUrls.find(b => b.provider.name === altProvider.name)?.url || altProvider.baseUrl;
+                return (
+                  <Button
+                    key={altProvider.name}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExternalBooking(altUrl)}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    {altProvider.name}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
-    )
-  } else {
-    return (
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-          <AlertCircle className="h-8 w-8 text-red-600" />
-        </div>
-        
-        <div>
-          <h3 className="text-xl font-semibold text-red-800">Booking Failed</h3>
-          <p className="text-gray-600">{bookingResult?.error || 'Unable to complete booking'}</p>
-        </div>
-
-        <div className="text-sm text-gray-500">
-          Please try again or contact support for assistance.
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
 }
 
 export default function FlightBookingModal({ state, dispatch }: FlightBookingModalProps) {
-  const [bookingService] = useState(() => new FlightBookingService());
-  const [bookingUrls, setBookingUrls] = useState<Array<{ provider: BookingProvider; url: string; price: number }>>([]);
-
-  useEffect(() => {
-    if (state.selectedFlight) {
-      const urls = bookingService.getBookingUrls(state.selectedFlight);
-      setBookingUrls(urls);
-    }
-  }, [state.selectedFlight, bookingService]);
+  const [selectedCabinClass, setSelectedCabinClass] = useState<CabinClassOption | null>(null);
 
   const handleProviderSelect = (provider: BookingProvider) => {
     dispatch({ type: 'SELECT_PROVIDER', provider });
   };
 
-  const handleUpdateBookingData = (data: Partial<BookingRequest>) => {
-    dispatch({ type: 'UPDATE_BOOKING_DATA', data });
-  };
-
-  const handleSubmitBooking = async () => {
-    if (!state.selectedFlight || !state.selectedProvider || !state.bookingData) return;
-
-    // Ensure we have required fields
-    const email = state.bookingData.contactInfo?.email;
-    if (!email) {
-      dispatch({ type: 'BOOKING_ERROR', error: 'Email address is required' });
-      return;
-    }
-
-    dispatch({ type: 'SUBMIT_BOOKING' });
-
-    try {
-      const request: BookingRequest = {
-        flightId: state.selectedFlight.id,
-        airline: state.selectedFlight.airline,
-        departure: state.selectedFlight.departure,
-        arrival: state.selectedFlight.arrival,
-        date: new Date().toISOString().split('T')[0],
-        passengers: state.bookingData.passengers || 1,
-        cabinClass: state.bookingData.cabinClass || 'economy',
-        contactInfo: {
-          email: email,
-          phone: state.bookingData.contactInfo?.phone || undefined
-        }
-      };
-
-      const result = await bookingService.bookFlight(request);
-      
-      if (result.success) {
-        dispatch({ type: 'BOOKING_SUCCESS', result });
-      } else {
-        dispatch({ type: 'BOOKING_ERROR', error: result.error || 'Booking failed' });
-      }
-    } catch (error) {
-      dispatch({ type: 'BOOKING_ERROR', error: 'An unexpected error occurred' });
-    }
-  };
-
   const handleClose = () => {
     dispatch({ type: 'CLOSE_BOOKING' });
-  };
-
-  const handleExternalBooking = (url: string) => {
-    window.open(url, '_blank');
+    setSelectedCabinClass(null);
   };
 
   if (!state.isOpen || !state.selectedFlight) return null;
 
   return (
     <Dialog open={state.isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Book Alternative Flight</span>
@@ -403,26 +321,17 @@ export default function FlightBookingModal({ state, dispatch }: FlightBookingMod
             <div>
               <h3 className="text-lg font-semibold mb-4">Choose Booking Provider</h3>
               <div className="space-y-3">
-                {bookingUrls.map(({ provider, url, price }) => {
-                  const isRecommended = bookingService.getRecommendedProvider(state.selectedFlight!) === provider;
+                {bookingProviders.map((provider) => {
+                  const isRecommended = provider.name === 'Google Flights';
                   return (
                     <div key={provider.name} className="space-y-2">
                       <ProviderCard
                         provider={provider}
-                        price={price}
+                        price={state.selectedFlight!.price}
                         isSelected={false}
                         isRecommended={isRecommended}
                         onSelect={() => handleProviderSelect(provider)}
                       />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleExternalBooking(url)}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Book on {provider.name}
-                      </Button>
                     </div>
                   );
                 })}
@@ -431,49 +340,38 @@ export default function FlightBookingModal({ state, dispatch }: FlightBookingMod
           )}
 
           {state.bookingStep === 'enter-details' && state.selectedProvider && (
-            <BookingDetailsForm
-              flight={state.selectedFlight}
-              provider={state.selectedProvider}
-              bookingData={state.bookingData}
-              onUpdateData={handleUpdateBookingData}
-              onSubmit={handleSubmitBooking}
-            />
-          )}
-
-          {state.bookingStep === 'confirming' && (
-            <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-              <h3 className="text-lg font-semibold">Processing Your Booking</h3>
-              <p className="text-gray-600">Please wait while we confirm your reservation...</p>
+            <div>
+              {!selectedCabinClass ? (
+                <CabinClassSelector
+                  flight={state.selectedFlight}
+                  selectedCabinClass={selectedCabinClass}
+                  onSelectCabinClass={setSelectedCabinClass}
+                />
+              ) : (
+                <ExternalBookingOptions
+                  flight={state.selectedFlight}
+                  provider={state.selectedProvider}
+                  cabinClass={selectedCabinClass}
+                />
+              )}
             </div>
-          )}
-
-          {(state.bookingStep === 'success' || state.bookingStep === 'error') && 
-           state.selectedProvider && state.bookingResult && (
-            <BookingConfirmation
-              flight={state.selectedFlight}
-              provider={state.selectedProvider}
-              bookingData={state.bookingData}
-              bookingResult={state.bookingResult}
-            />
           )}
         </div>
 
-        {(state.bookingStep === 'success' || state.bookingStep === 'error') && (
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={handleClose} className="flex-1">
-              Close
+        <div className="flex gap-2 pt-4">
+          <Button variant="outline" onClick={handleClose} className="flex-1">
+            Close
+          </Button>
+          {state.bookingStep === 'enter-details' && selectedCabinClass && (
+            <Button 
+              variant="outline"
+              onClick={() => setSelectedCabinClass(null)}
+              className="flex-1"
+            >
+              Back to Cabin Selection
             </Button>
-            {state.bookingStep === 'error' && (
-              <Button 
-                onClick={() => dispatch({ type: 'RESET_BOOKING' })}
-                className="flex-1"
-              >
-                Try Again
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )
