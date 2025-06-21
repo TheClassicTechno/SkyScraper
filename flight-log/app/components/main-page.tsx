@@ -138,7 +138,7 @@ const MainPage = () => {
                                 {/* Search Button */}
                                 <Link href="/flight-score">
                                     <Button
-                                        onClick={fetchFlightData}
+                                        onClick={() => fetchFlightData(flightNumber)}
                                         disabled={!flightNumber || !selectedAirline}
                                         className="w-full h-12 text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
                                     >
