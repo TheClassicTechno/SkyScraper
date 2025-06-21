@@ -14,7 +14,9 @@ import {
   ExternalLink,
   Star,
   Shield,
-  Clock
+  Clock,
+  Brain,
+  TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Progress } from "@/components/ui/progress"
 import { type AlternativeFlight } from "@/lib/flight-risk-assessment"
 import { 
   type BookingModalState,
@@ -35,6 +38,11 @@ import {
   getRiskLevelColor,
   getRiskLevelText
 } from "@/lib/flight-booking"
+import { 
+  type FlightRecommendation,
+  type AIRecommendationContext,
+  MockAIRecommendationService
+} from "@/lib/ai-flight-recommendations"
 
 interface FlightBookingModalProps {
   state: BookingModalState;
@@ -79,6 +87,220 @@ const cabinClasses: CabinClassOption[] = [
     icon: '👑'
   }
 ];
+
+function AIRecommendationCard({ 
+  recommendation, 
+  onSelect 
+}: { 
+  recommendation: FlightRecommendation; 
+  onSelect: (flight: AlternativeFlight) => void;
+}) {
+  const { flight, score, reasoning, category, tags } = recommendation;
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'safety': return 'text-green-600 bg-green-50';
+      case 'price': return 'text-blue-600 bg-blue-50';
+      case 'convenience': return 'text-purple-600 bg-purple-50';
+      case 'premium': return 'text-amber-600 bg-amber-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'safety': return <Shield className="h-4 w-4" />;
+      case 'price': return <TrendingUp className="h-4 w-4" />;
+      case 'convenience': return <Clock className="h-4 w-4" />;
+      case 'premium': return <Star className="h-4 w-4" />;
+      default: return <Star className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer border-2 border-blue-200 bg-blue-50" onClick={() => onSelect(flight)}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Brain className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold">{flight.airline} {flight.id}</h4>
+              <div className="flex items-center gap-2">
+                <Badge className={`text-xs ${getCategoryColor(category)}`}>
+                  {getCategoryIcon(category)}
+                  <span className="ml-1">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {score}% Score
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-bold text-green-600">
+              {formatPrice(flight.price)}
+            </div>
+            <Badge variant={flight.riskScore <= 30 ? "default" : "secondary"}>
+              {flight.riskScore}% Risk
+            </Badge>
+          </div>
+        </div>
+
+        {/* AI Reasoning */}
+        <div className="mb-3">
+          <h5 className="text-sm font-medium text-gray-700 mb-2">AI Analysis:</h5>
+          <div className="space-y-1">
+            {reasoning.slice(0, 3).map((reason, index) => (
+              <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                {reason}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag, index) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+
+        {/* Flight Details */}
+        <div className="grid grid-cols-2 gap-4 mt-3 text-xs">
+          <div>
+            <span className="text-gray-500">Departure:</span>
+            <div className="font-medium">{flight.departureTime}</div>
+          </div>
+          <div>
+            <span className="text-gray-500">Arrival:</span>
+            <div className="font-medium">{flight.arrivalTime}</div>
+          </div>
+        </div>
+
+        <Button 
+          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(flight);
+          }}
+        >
+          <Brain className="h-4 w-4 mr-2" />
+          Book AI Recommended Flight
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AIRecommendationsSection({ 
+  originalFlight, 
+  alternatives, 
+  onSelectFlight 
+}: { 
+  originalFlight: AlternativeFlight; 
+  alternatives: AlternativeFlight[]; 
+  onSelectFlight: (flight: AlternativeFlight) => void;
+}) {
+  const [recommendations, setRecommendations] = useState<FlightRecommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [topRecommendation, setTopRecommendation] = useState<FlightRecommendation | null>(null);
+
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      setLoading(true);
+      const aiService = new MockAIRecommendationService();
+      
+      const context: AIRecommendationContext = {
+        originalFlight: {
+          id: originalFlight.id,
+          airline: originalFlight.airline,
+          departure: originalFlight.departure,
+          arrival: originalFlight.arrival,
+          riskScore: originalFlight.riskScore,
+          price: originalFlight.price,
+          departureTime: originalFlight.departureTime,
+          userPreferences: {
+            priority: 'safety', // Default to safety for high-risk flights
+            budget: 'medium'
+          }
+        }
+      };
+
+      try {
+        const recs = await aiService.getRecommendations(alternatives, context);
+        setRecommendations(recs);
+        const topRec = await aiService.getTopRecommendation(alternatives, context);
+        setTopRecommendation(topRec);
+      } catch (error) {
+        console.error('Failed to load AI recommendations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecommendations();
+  }, [originalFlight, alternatives]);
+
+  if (loading) {
+    return (
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        <h3 className="text-lg font-semibold">AI Analyzing Flight Options...</h3>
+        <p className="text-gray-600">Finding the best alternative flights for you</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Top Recommendation */}
+      {topRecommendation && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-blue-800">AI Top Pick</h3>
+            <Badge className="bg-blue-600 text-white">
+              {topRecommendation.score}% Match
+            </Badge>
+          </div>
+          <p className="text-sm text-blue-700 mb-3">
+            {new MockAIRecommendationService().generateSummary(topRecommendation)}
+          </p>
+          <Button 
+            onClick={() => onSelectFlight(topRecommendation.flight)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Star className="h-4 w-4 mr-2" />
+            Book Top Recommendation
+          </Button>
+        </div>
+      )}
+
+      {/* All Recommendations */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Brain className="h-5 w-5 text-purple-600" />
+          AI-Powered Recommendations
+        </h3>
+        <div className="space-y-3">
+          {recommendations.map((recommendation, index) => (
+            <AIRecommendationCard
+              key={recommendation.flight.id}
+              recommendation={recommendation}
+              onSelect={onSelectFlight}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ProviderCard({ 
   provider, 
@@ -292,6 +514,7 @@ function ExternalBookingOptions({
 
 export default function FlightBookingModal({ state, dispatch }: FlightBookingModalProps) {
   const [selectedCabinClass, setSelectedCabinClass] = useState<CabinClassOption | null>(null);
+  const [showAIRecommendations, setShowAIRecommendations] = useState(true);
 
   const handleProviderSelect = (provider: BookingProvider) => {
     dispatch({ type: 'SELECT_PROVIDER', provider });
@@ -299,6 +522,16 @@ export default function FlightBookingModal({ state, dispatch }: FlightBookingMod
 
   const handleClose = () => {
     dispatch({ type: 'CLOSE_BOOKING' });
+    setSelectedCabinClass(null);
+    setShowAIRecommendations(true);
+  };
+
+  const handleSelectFlight = (flight: AlternativeFlight) => {
+    dispatch({ 
+      type: 'OPEN_BOOKING', 
+      flight: flight 
+    });
+    setShowAIRecommendations(false);
     setSelectedCabinClass(null);
   };
 
@@ -317,7 +550,64 @@ export default function FlightBookingModal({ state, dispatch }: FlightBookingMod
         </DialogHeader>
 
         <div className="space-y-6">
-          {state.bookingStep === 'select-provider' && (
+          {showAIRecommendations && (
+            <AIRecommendationsSection
+              originalFlight={state.selectedFlight}
+              alternatives={[
+                {
+                  id: 'DL2345',
+                  airline: 'Delta Air Lines',
+                  departure: state.selectedFlight.departure,
+                  arrival: state.selectedFlight.arrival,
+                  departureTime: '10:30',
+                  arrivalTime: '13:45',
+                  price: 450,
+                  riskScore: 25,
+                  delayRate: 8,
+                  safetyLogs: ['Clean safety record for past 6 months', 'No mechanical issues reported'],
+                },
+                {
+                  id: 'AA3456',
+                  airline: 'American Airlines',
+                  departure: state.selectedFlight.departure,
+                  arrival: state.selectedFlight.arrival,
+                  departureTime: '12:15',
+                  arrivalTime: '15:30',
+                  price: 520,
+                  riskScore: 30,
+                  delayRate: 12,
+                  safetyLogs: ['Minor weather delays only', 'Regular maintenance schedule'],
+                },
+                {
+                  id: 'UA4567',
+                  airline: 'United Airlines',
+                  departure: state.selectedFlight.departure,
+                  arrival: state.selectedFlight.arrival,
+                  departureTime: '14:00',
+                  arrivalTime: '17:15',
+                  price: 480,
+                  riskScore: 35,
+                  delayRate: 10,
+                  safetyLogs: ['Good on-time performance', 'Recent safety inspection passed'],
+                },
+                {
+                  id: 'SW5678',
+                  airline: 'Southwest Airlines',
+                  departure: state.selectedFlight.departure,
+                  arrival: state.selectedFlight.arrival,
+                  departureTime: '16:30',
+                  arrivalTime: '19:45',
+                  price: 380,
+                  riskScore: 28,
+                  delayRate: 15,
+                  safetyLogs: ['Consistent safety ratings', 'No recent incidents'],
+                },
+              ]}
+              onSelectFlight={handleSelectFlight}
+            />
+          )}
+
+          {state.bookingStep === 'select-provider' && !showAIRecommendations && (
             <div>
               <h3 className="text-lg font-semibold mb-4">Choose Booking Provider</h3>
               <div className="space-y-3">
@@ -362,6 +652,15 @@ export default function FlightBookingModal({ state, dispatch }: FlightBookingMod
           <Button variant="outline" onClick={handleClose} className="flex-1">
             Close
           </Button>
+          {showAIRecommendations && (
+            <Button 
+              variant="outline"
+              onClick={() => setShowAIRecommendations(false)}
+              className="flex-1"
+            >
+              Skip AI Recommendations
+            </Button>
+          )}
           {state.bookingStep === 'enter-details' && selectedCabinClass && (
             <Button 
               variant="outline"
