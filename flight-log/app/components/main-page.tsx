@@ -36,7 +36,46 @@ const MainPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
+            {/* Animated Clouds */}
+            <div className="absolute inset-0 pointer-events-none">
+                {/* Cloud 1 */}
+                <div className="absolute top-20 left-10 animate-pulse">
+                    <div className="text-8xl opacity-60">☁️</div>
+                </div>
+                {/* Cloud 2 */}
+                <div className="absolute top-32 right-20 animate-pulse" style={{ animationDelay: '1s' }}>
+                    <div className="text-7xl opacity-55">☁️</div>
+                </div>
+                {/* Cloud 3 */}
+                <div className="absolute top-16 right-1/3 animate-pulse" style={{ animationDelay: '2s' }}>
+                    <div className="text-6xl opacity-65">☁️</div>
+                </div>
+                {/* Cloud 4 */}
+                <div className="absolute top-40 left-1/4 animate-pulse" style={{ animationDelay: '0.5s' }}>
+                    <div className="text-7xl opacity-60">☁️</div>
+                </div>
+                {/* Cloud 5 */}
+                <div className="absolute top-60 right-1/4 animate-pulse" style={{ animationDelay: '1.5s' }}>
+                    <div className="text-6xl opacity-55">☁️</div>
+                </div>
+                {/* Cloud 7 */}
+                <div className="absolute top-96 right-10 animate-pulse" style={{ animationDelay: '2.2s' }}>
+                    <div className="text-7xl opacity-55">☁️</div>
+                </div>
+                {/* Cloud 8 */}
+                <div className="absolute top-72 left-16 animate-pulse" style={{ animationDelay: '1.2s' }}>
+                    <div className="text-6xl opacity-65">☁️</div>
+                </div>
+                {/* Additional clouds for better visibility */}
+                <div className="absolute top-120 left-1/3 animate-pulse" style={{ animationDelay: '0.3s' }}>
+                    <div className="text-7xl opacity-60">☁️</div>
+                </div>
+                <div className="absolute top-140 right-1/3 animate-pulse" style={{ animationDelay: '1.8s' }}>
+                    <div className="text-6xl opacity-55">☁️</div>
+                </div>
+            </div>
+
             {/* Header */}
             <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,65 +187,9 @@ const MainPage = () => {
                                 </Link>
 
                             </div>
-
-                            {/* Example */}
-                            <div className="text-center pt-4 border-t border-gray-100">
-                                <p className="text-sm text-gray-500">
-                                    Example: Select "American Airlines" and enter "1234" for flight AA1234
-                                </p>
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
-
-                {/* Features Section */}
-                <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="text-center p-6 border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-200">
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <Shield className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Safety First</h3>
-                        <p className="text-gray-600">Real-time safety scores and risk assessments for every flight</p>
-                    </Card>
-
-                    <Card className="text-center p-6 border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-200">
-                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <Clock className="h-6 w-6 text-green-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Live Updates</h3>
-                        <p className="text-gray-600">Get instant notifications about delays, gate changes, and more</p>
-                    </Card>
-
-                    <Card className="text-center p-6 border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-200">
-                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <MapPin className="h-6 w-6 text-purple-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Coverage</h3>
-                        <p className="text-gray-600">Track flights worldwide with comprehensive airport data</p>
-                    </Card>
-                </div>
-
-                {/* Trust Indicators */}
-                <div className="mt-16 text-center">
-                    <p className="text-gray-500 mb-6">Trusted by travelers from</p>
-                    <div className="flex items-center justify-center gap-8 opacity-60">
-                        <div className="flex items-center gap-2">
-                            <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                            <span className="font-semibold">4.8/5</span>
-                            <span className="text-gray-500">Rating</span>
-                        </div>
-                        <div className="w-px h-6 bg-gray-300"></div>
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold">2M+</span>
-                            <span className="text-gray-500">Active Users</span>
-                        </div>
-                        <div className="w-px h-6 bg-gray-300"></div>
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold">99.9%</span>
-                            <span className="text-gray-500">Uptime</span>
-                        </div>
-                    </div>
-                </div>
             </main>
 
             {/* Footer */}
