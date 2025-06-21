@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useReducer } from "react"
 import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { AIChatAgent } from "./ai-chat-agent"
+import { bookingReducer } from '@/lib/flight-booking'
+import FlightBookingModal from './flight-booking-modal'
 
 // Mock flight data
 const flights = [
@@ -103,7 +105,14 @@ function RiskScoreCircle({ score, size = 120 }: { score: number; size?: number }
 }
 
 function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
-  const [showReschedule, setShowReschedule] = useState(false)
+  const [bookingState, bookingDispatch] = useReducer(bookingReducer, {
+    isOpen: false,
+    selectedFlight: null,
+    selectedProvider: null,
+    bookingStep: 'select-provider',
+    bookingData: {},
+    bookingResult: null
+  });
 
   return (
     <Dialog>
@@ -215,7 +224,22 @@ function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
         {flight.riskScore > 60 && (
           <div className="mt-6 pt-4 border-t">
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowReschedule(!showReschedule)} className="flex-1">
+              <Button 
+                variant="outline" 
+                onClick={() => bookingDispatch({ type: 'OPEN_BOOKING', flight: {
+                  id: flight.id,
+                  airline: flight.id.split(/\d/)[0] || 'Unknown',
+                  departure: flight.departure,
+                  arrival: flight.arrival,
+                  departureTime: flight.departureTime,
+                  arrivalTime: flight.arrivalTime,
+                  price: 450, // You may want to use a real price if available
+                  riskScore: flight.riskScore,
+                  delayRate: 10, // Mock value
+                  safetyLogs: ['No recent incidents'], // Mock value
+                } })}
+                className="flex-1"
+              >
                 <Calendar className="h-4 w-4 mr-2" />
                 Reschedule Flight
               </Button>
@@ -223,25 +247,9 @@ function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
                 Cancel Flight
               </Button>
             </div>
-
-            {showReschedule && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Available Reschedule Options</h4>
-                <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    Tomorrow 14:30 - Risk Score: 25%
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    Tomorrow 18:15 - Risk Score: 31%
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    Day After 09:45 - Risk Score: 18%
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
+        <FlightBookingModal state={bookingState} dispatch={bookingDispatch} />
       </DialogContent>
     </Dialog>
   )
