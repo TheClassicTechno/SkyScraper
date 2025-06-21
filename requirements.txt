@@ -1,0 +1,15 @@
+# Core requirements that work with conda
+flask==2.3.3
+flask-socketio==5.3.6
+requests==2.31.0
+
+# For translation - using a more reliable library
+translate==3.6.1
+
+# For speech recognition (optional - can be added later)
+# speechrecognition==3.10.0
+# pyaudio==0.2.14
+
+# WebSocket support
+python-socketio==5.8.0
+eventlet==0.33.3
