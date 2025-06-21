@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { fetchFlightData } from "../api/aviation-request/route"
+
 import Link from "next/link"
 
 const popularAirlines = [
@@ -136,7 +138,7 @@ const MainPage = () => {
                                 {/* Search Button */}
                                 <Link href="/flight-score">
                                     <Button
-                                        onClick={handleSearch}
+                                        onClick={fetchFlightData}
                                         disabled={!flightNumber || !selectedAirline}
                                         className="w-full h-12 text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
                                     >
