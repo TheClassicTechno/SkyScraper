@@ -89,7 +89,15 @@ const MainPage = () => {
                                 <p className="text-xs text-gray-600">Real-time Flight Tracking</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:gap-4">
+                            <nav className="hidden sm:flex items-center gap-4">
+                                <Link href="/" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                    Home
+                                </Link>
+                                <Link href="/flight-score" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                    Flight Dashboard
+                                </Link>
+                            </nav>
                             <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50 text-xs sm:text-sm">
                                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
                                 Live Data
@@ -186,6 +194,15 @@ const MainPage = () => {
                                     </Button>
                                 </Link>
 
+                                {/* Quick Access Button */}
+                                <div className="text-center">
+                                    <p className="text-sm text-gray-500 mb-2">Or</p>
+                                    <Link href="/flight-score">
+                                        <Button variant="outline" className="w-full h-10 sm:h-12 text-base sm:text-lg">
+                                            View Flight Dashboard
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </CardContent>

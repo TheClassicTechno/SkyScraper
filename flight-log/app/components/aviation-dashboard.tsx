@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useReducer } from "react"
-import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi } from "lucide-react"
+import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { AIChatAgent } from "./ai-chat-agent"
 import { bookingReducer } from '@/lib/flight-booking'
 import FlightBookingModal from './flight-booking-modal'
+import Link from "next/link"
 
 // Mock flight data
 const flights = [
@@ -275,7 +276,15 @@ export default function AviationDashboard() {
                 <p className="text-xs text-gray-600">Real-time Flight Tracking</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <nav className="hidden sm:flex items-center gap-4">
+                <Link href="/" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                  Home
+                </Link>
+                <Link href="/flight-score" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                  Flight Dashboard
+                </Link>
+              </nav>
               <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50 text-xs sm:text-sm">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
                 Live Data
@@ -289,9 +298,17 @@ export default function AviationDashboard() {
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6">
         {/* Hero Section */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4">
-            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
-            ATC Risk Management & Flight Operations
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Link href="/">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+              ATC Risk Management & Flight Operations
+            </div>
           </div>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 leading-tight">
