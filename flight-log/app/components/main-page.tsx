@@ -109,18 +109,23 @@ const MainPage = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
-
                                 {/* Flight Number Input */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Flight Number</label>
                                     <div className="relative">
                                         <Input
                                             type="text"
-                                            placeholder="e.g., 1234"
+                                            placeholder="e.g., 1234 or AB12"
                                             value={flightNumber}
-                                            onChange={(e) => setFlightNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                                            onChange={(e) =>
+                                                setFlightNumber(
+                                                    e.target.value
+                                                        .replace(/[^0-9A-Z]/gi, "")  // Remove anything not 0-9 or A-Z
+                                                        .toUpperCase()               // Convert all letters to uppercase
+                                                )
+                                            }
                                             className="h-12 pl-4 pr-12 text-lg"
-                                            maxLength={4}
+                                            maxLength={6}
                                         />
                                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                                             <Plane className="h-5 w-5 text-gray-400" />
