@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useReducer } from "react"
 import { 
   AlertTriangle, 
   Calendar, 
@@ -41,6 +41,27 @@ import {
   calculateAdvancedRiskScore,
   type AdvancedRiskFactors 
 } from "@/lib/advanced-risk-assessment"
+import { 
+  type BookingModalState,
+  type BookingAction,
+  bookingReducer
+} from "@/lib/flight-booking"
+import FlightBookingModal from "./flight-booking-modal"
+
+// Utility functions for risk levels
+function getRiskLevelColor(riskScore: number): string {
+  if (riskScore <= 25) return 'text-green-600';
+  if (riskScore <= 45) return 'text-yellow-600';
+  if (riskScore <= 70) return 'text-orange-600';
+  return 'text-red-600';
+}
+
+function getRiskLevelText(riskScore: number): string {
+  if (riskScore <= 25) return 'Safe';
+  if (riskScore <= 45) return 'Caution';
+  if (riskScore <= 70) return 'High Risk';
+  return 'No-Go';
+}
 
 interface FlightRiskAssessmentProps {
   flightNumber: string;
@@ -241,7 +262,11 @@ function MechanicalReportCard({ report }: { report: MechanicalReport }) {
   )
 }
 
-function AlternativeFlightCard({ flight, onSelect }: { flight: AlternativeFlight; onSelect: (flight: AlternativeFlight) => void }) {
+function AlternativeFlightCard({ flight, onSelect, onBookNow }: { 
+  flight: AlternativeFlight; 
+  onSelect: (flight: AlternativeFlight) => void;
+  onBookNow: (flight: AlternativeFlight) => void;
+}) {
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onSelect(flight)}>
       <CardContent className="p-4">
@@ -287,10 +312,29 @@ function AlternativeFlightCard({ flight, onSelect }: { flight: AlternativeFlight
           </div>
         </div>
 
-        <Button className="w-full mt-3" size="sm">
-          <ExternalLink className="h-4 w-4 mr-2" />
-          Book Alternative
-        </Button>
+        <div className="flex gap-2 mt-3">
+          <Button 
+            className="flex-1" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBookNow(flight);
+            }}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Book Now
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(flight);
+            }}
+          >
+            Details
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
@@ -311,6 +355,16 @@ export default function FlightRiskAssessment({
   const [alternatives, setAlternatives] = useState<AlternativeFlight[]>([])
   const [loading, setLoading] = useState(true)
   const [useAdvancedModel, setUseAdvancedModel] = useState(true)
+  
+  // Booking modal state
+  const [bookingState, bookingDispatch] = useReducer(bookingReducer, {
+    isOpen: false,
+    selectedFlight: null,
+    selectedProvider: null,
+    bookingStep: 'select-provider',
+    bookingData: {},
+    bookingResult: null
+  });
 
   useEffect(() => {
     const assessFlightRisk = async () => {
@@ -432,6 +486,15 @@ export default function FlightRiskAssessment({
   const isHighRisk = riskScore.overall > 40
   const isNoGo = riskScore.overall > 70
 
+  const handleBookNow = (flight: AlternativeFlight) => {
+    bookingDispatch({ type: 'OPEN_BOOKING', flight });
+  };
+
+  const handleSelectAlternative = (flight: AlternativeFlight) => {
+    console.log('Selected alternative:', flight);
+    // Handle detailed view logic here
+  };
+
   return (
     <div className="space-y-6">
       {/* Model Selection */}
@@ -478,144 +541,87 @@ export default function FlightRiskAssessment({
         </CardContent>
       </Card>
 
-      {/* Risk Score Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5" />
-              Overall Risk Score
-              {useAdvancedModel && <Brain className="h-4 w-4 text-purple-600" />}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <RiskScoreCircle score={riskScore.overall} size={140} />
-            
-            {useAdvancedModel && advancedResults && (
-              <div className="mt-4 w-full">
-                <ConfidenceInterval 
-                  interval={advancedResults.monteCarloResults.confidenceInterval}
-                  score={riskScore.overall}
-                />
-                <UncertaintyIndicator uncertainty={advancedResults.uncertaintyAnalysis.overallUncertainty} />
+      {/* Risk Score Display */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Risk Assessment Results
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Overall Risk Score */}
+            <div className="text-center">
+              <div className={`text-4xl font-bold mb-2 ${getRiskLevelColor(riskScore.overall)}`}>
+                {riskScore.overall}%
+              </div>
+              <div className={`text-lg font-semibold ${getRiskLevelColor(riskScore.overall)}`}>
+                {getRiskLevelText(riskScore.overall)}
+              </div>
+              <Progress value={riskScore.overall} className="mt-2" />
+            </div>
+
+            {/* Book Alternative Button for High Risk */}
+            {isHighRisk && alternatives.length > 0 && (
+              <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 mb-2">
+                  ⚠️ High Risk Flight Detected
+                </h4>
+                <p className="text-yellow-700 mb-3">
+                  We found {alternatives.length} safer alternative flights with lower risk scores.
+                </p>
+                <Button 
+                  onClick={() => {
+                    if (alternatives.length > 0) {
+                      handleBookNow(alternatives[0]); // Open booking for the first alternative
+                    }
+                  }}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Book Safer Alternative Flight
+                </Button>
               </div>
             )}
-            
-            <p className="text-sm text-gray-600 mt-4 text-center">
-              {generateRiskRecommendation(riskScore)}
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Risk Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Weather Risk</span>
-                <span>{riskScore.weather}%</span>
-              </div>
-              <Progress value={riskScore.weather} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Recent Events</span>
-                <span>{riskScore.events}%</span>
-              </div>
-              <Progress value={riskScore.events} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Aircraft Safety</span>
-                <span>{riskScore.aircraft}%</span>
-              </div>
-              <Progress value={riskScore.aircraft} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Route Risk</span>
-                <span>{riskScore.route}%</span>
-              </div>
-              <Progress value={riskScore.route} className="h-2" />
-            </div>
-            
-            {useAdvancedModel && advancedResults && (
-              <>
-                <Separator />
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Temporal Risk</span>
-                    <span>{advancedResults.temporalRisk}%</span>
-                  </div>
-                  <Progress value={advancedResults.temporalRisk} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Environmental Risk</span>
-                    <span>{advancedResults.environmentalRisk}%</span>
-                  </div>
-                  <Progress value={advancedResults.environmentalRisk} className="h-2" />
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Advanced Analysis Results */}
-      {useAdvancedModel && advancedResults && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-600" />
-              Advanced Analysis Results
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Risk Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="font-semibold mb-3">Bayesian Inference</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Risk Probability:</span>
-                    <span className="font-medium">{(advancedResults.bayesianResults.riskProbability * 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Confidence:</span>
-                    <span className="font-medium">{(advancedResults.bayesianResults.confidence * 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Evidence Strength:</span>
-                    <span className="font-medium">{(advancedResults.bayesianResults.evidenceStrength * 100).toFixed(1)}%</span>
-                  </div>
+                <h4 className="font-semibold mb-2">Weather Risk</h4>
+                <div className="flex items-center gap-2">
+                  <Progress value={riskScore.weather} className="flex-1" />
+                  <span className="text-sm font-medium">{riskScore.weather}%</span>
                 </div>
               </div>
               
               <div>
-                <h4 className="font-semibold mb-3">Monte Carlo Simulation</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Simulations:</span>
-                    <span className="font-medium">10,000 iterations</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Confidence Level:</span>
-                    <span className="font-medium">95%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Risk Range:</span>
-                    <span className="font-medium">
-                      {advancedResults.monteCarloResults.confidenceInterval[0]}% - {advancedResults.monteCarloResults.confidenceInterval[1]}%
-                    </span>
-                  </div>
+                <h4 className="font-semibold mb-2">Aircraft Risk</h4>
+                <div className="flex items-center gap-2">
+                  <Progress value={riskScore.aircraft} className="flex-1" />
+                  <span className="text-sm font-medium">{riskScore.aircraft}%</span>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold mb-2">Recent Events</h4>
+                <div className="flex items-center gap-2">
+                  <Progress value={riskScore.events} className="flex-1" />
+                  <span className="text-sm font-medium">{riskScore.events}%</span>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold mb-2">Route Risk</h4>
+                <div className="flex items-center gap-2">
+                  <Progress value={riskScore.route} className="flex-1" />
+                  <span className="text-sm font-medium">{riskScore.route}%</span>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* FAA Alerts */}
       {faaAlerts.length > 0 && (
@@ -669,10 +675,8 @@ export default function FlightRiskAssessment({
                 <AlternativeFlightCard 
                   key={flight.id} 
                   flight={flight} 
-                  onSelect={(selectedFlight) => {
-                    console.log('Selected alternative:', selectedFlight)
-                    // Handle booking logic here
-                  }}
+                  onSelect={handleSelectAlternative}
+                  onBookNow={handleBookNow}
                 />
               ))}
             </div>
@@ -697,6 +701,12 @@ export default function FlightRiskAssessment({
           </CardContent>
         </Card>
       )}
+
+      {/* Booking Modal */}
+      <FlightBookingModal 
+        state={bookingState} 
+        dispatch={bookingDispatch} 
+      />
     </div>
   )
 } 
