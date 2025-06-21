@@ -261,24 +261,49 @@ export default function AviationDashboard() {
   const averageRisk = Math.round(flights.reduce((sum, f) => sum + f.riskScore, 0) / flights.length)
 
   return (
-    <div className="min-h-screen bg-blue-400 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Aviation Safety Dashboard</h1>
-            <p className="text-gray-600">ATC Risk Management & Flight Operations</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-12 sm:h-14 md:h-16">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg sm:rounded-xl">
+                <Plane className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">FlightSafe</h1>
+                <p className="text-xs text-gray-600">Real-time Flight Tracking</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50 text-xs sm:text-sm">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
+                Live Data
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Wifi className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-gray-600">ATC Connected</span>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6">
+        {/* Hero Section */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4">
+            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+            ATC Risk Management & Flight Operations
           </div>
+
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 leading-tight">
+            Aviation Safety
+            <span className="block text-blue-600">Dashboard</span>
+          </h1>
         </div>
 
         {/* Three Main Dashboard Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Section 1: Overview Stats */}
-          <Card>
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plane className="h-5 w-5" />
@@ -288,7 +313,7 @@ export default function AviationDashboard() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{totalFlights}</div>
+                  <div className="text-2xl font-bold text-blue-600">{totalFlights}</div>
                   <div className="text-sm text-gray-600">Active Flights</div>
                 </div>
                 <div className="text-center">
@@ -297,7 +322,7 @@ export default function AviationDashboard() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-semibold">{averageRisk}%</div>
+                <div className="text-lg font-semibold text-gray-900">{averageRisk}%</div>
                 <div className="text-sm text-gray-600">Average Risk Score</div>
                 <Progress value={averageRisk} className="mt-2" />
               </div>
@@ -305,7 +330,7 @@ export default function AviationDashboard() {
           </Card>
 
           {/* Section 2: Risk Distribution */}
-          <Card>
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
@@ -333,7 +358,7 @@ export default function AviationDashboard() {
           </Card>
 
           {/* Section 3: System Status */}
-          <Card>
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
@@ -361,39 +386,39 @@ export default function AviationDashboard() {
         </div>
 
         {/* Flight List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Flights</CardTitle>
+        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl">Active Flights</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-6">
+            <div className="space-y-6">
               {flights.map((flight) => (
-                <div key={flight.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <RiskScoreCircle score={flight.riskScore} size={80} />
+                <div key={flight.id} className="flex items-center justify-between p-6 border border-gray-100 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all duration-200">
+                  <div className="flex items-center gap-6">
+                    <RiskScoreCircle score={flight.riskScore} size={100} />
 
                     <div>
-                      <div className="font-semibold">{flight.id}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="font-semibold text-lg">{flight.id}</div>
+                      <div className="text-base text-gray-600">
                         {flight.departure} → {flight.arrival}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
+                        <span className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
                           {flight.departureTime}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
                           {flight.passengers} pax
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {flight.riskScore > 60 && (
-                      <Badge variant="destructive" className="flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
+                      <Badge variant="destructive" className="flex items-center gap-2 text-sm px-3 py-1">
+                        <AlertTriangle className="h-4 w-4" />
                         High Risk
                       </Badge>
                     )}
@@ -407,7 +432,16 @@ export default function AviationDashboard() {
 
         {/* AI Chat Agent */}
         <AIChatAgent flights={flights} />
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white/80 backdrop-blur-sm border-t border-blue-100 mt-12 sm:mt-16 md:mt-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+          <div className="text-center text-gray-600">
+            <p className="text-sm sm:text-base">&copy; 2024 FlightSafe. Keeping you informed and secure in the skies.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
