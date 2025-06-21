@@ -1,8 +1,7 @@
-import Image from "next/image";
-import AviationDashboard from "./components/aviation-dashboard";
+import MainPage from "./components/main-page";
 
 export default function Home() {
   return (
-    <AviationDashboard />
+    <MainPage />
   );
 }

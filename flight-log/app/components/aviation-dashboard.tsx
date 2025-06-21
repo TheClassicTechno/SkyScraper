@@ -94,7 +94,7 @@ function RiskScoreCircle({ score, size = 120 }: { score: number; size?: number }
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-bold">{score}%</div>
+          <div className="text-xl font-bold">{score}%</div>
           <div className="text-xs text-muted-foreground">Risk</div>
         </div>
       </div>
@@ -253,12 +253,12 @@ export default function AviationDashboard() {
   const averageRisk = Math.round(flights.reduce((sum, f) => sum + f.riskScore, 0) / flights.length)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-blue-400 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Aviation Safety Dashboard</h1>
+            <h1 className="text-3xl font-bold text-white">Aviation Safety Dashboard</h1>
             <p className="text-gray-600">ATC Risk Management & Flight Operations</p>
           </div>
           <div className="flex items-center gap-2">
