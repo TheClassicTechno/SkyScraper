@@ -85,7 +85,7 @@ const MainPage = () => {
                                 <Plane className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-lg sm:text-xl font-bold text-gray-900">FlightSafe</h1>
+                                <h1 className="text-lg sm:text-xl font-bold text-gray-900">SkyScraper</h1>
                                 <p className="text-xs text-gray-600">Real-time Flight Tracking</p>
                             </div>
                         </div>
@@ -196,7 +196,7 @@ const MainPage = () => {
             <footer className="bg-white/80 backdrop-blur-sm border-t border-blue-100 mt-12 sm:mt-16 md:mt-20">
                 <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
                     <div className="text-center text-gray-600">
-                        <p className="text-sm sm:text-base">&copy; 2024 FlightSafe. Keeping you informed and secure in the skies.</p>
+                        <p className="text-sm sm:text-base">&copy; 2024 SkyScraper. Keeping you informed and secure in the skies.</p>
                     </div>
                 </div>
             </footer>
