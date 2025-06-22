@@ -15,6 +15,7 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
   const audioRef = useRef(null);
 
   const languages = [
+    { code: 'en', name: 'English' },
     { code: 'es', name: 'Spanish' },
     { code: 'fr', name: 'French' },
     { code: 'de', name: 'German' },
