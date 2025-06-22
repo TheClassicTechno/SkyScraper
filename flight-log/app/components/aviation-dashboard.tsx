@@ -14,12 +14,9 @@ import Link from "next/link"
 import { FlightRoute } from '@/lib/turbulence-data'
 import { fetchFlightData } from '@/lib/aviation-apis'
 import { Input } from "@/components/ui/input"
-<<<<<<< HEAD
 import { FlightBookingService, bookingProviders } from '@/lib/flight-booking'
-=======
 import { VapidAgent } from "./vapid-chat-agent"
 
->>>>>>> 46cbec98b61c326aa9dd73c30f60968d25f2a072
 
 // Mock flight data
 
@@ -622,7 +619,6 @@ function AIFlightRecommendationsSection({ flights }: {
                   {rec.bookingOptions && rec.bookingOptions.length > 0 && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-700">Book:</span>
-<<<<<<< HEAD
                       {rec.bookingOptions.map((option: any, optIndex: number) => {
                         const bookingService = new FlightBookingService();
                         const bookingUrls = bookingService.getBookingUrls(rec.flight);
@@ -637,28 +633,6 @@ function AIFlightRecommendationsSection({ flights }: {
                             onClick={() => {
                               if (bookingUrl) {
                                 window.open(bookingUrl, '_blank');
-=======
-                      {rec.bookingOptions.map((option: any, optIndex: number) => (
-                        <Button
-                          key={optIndex}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs transition-all duration-200 hover:bg-blue-50"
-                          onClick={() => {
-                            bookingDispatch({
-                              type: 'OPEN_BOOKING',
-                              flight: {
-                                id: rec.flight.id,
-                                airline: rec.flight.airline,
-                                departure: rec.flight.departure,
-                                arrival: rec.flight.arrival,
-                                departureTime: rec.flight.departureTime,
-                                arrivalTime: rec.flight.arrivalTime,
-                                price: rec.flight.price,
-                                riskScore: rec.flight.riskScore,
-                                delayRate: rec.flight.delayRate,
-                                safetyLogs: rec.flight.safetyLogs,
->>>>>>> 46cbec98b61c326aa9dd73c30f60968d25f2a072
                               }
                             }}
                           >
