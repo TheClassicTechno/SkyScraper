@@ -3,9 +3,7 @@
 /**
  * code for the AI chat agent, should be able to call, text
  */
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { MessageCircle, Send, X, Plane } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -56,7 +54,7 @@ export function AIChatAgent({ flights }: AIChatAgentProps) {
 - Safety protocol guidance
 - Regulatory compliance questions
 
-I can see you currently have ${flights.length} active flights with ${flights.filter((f) => f.riskScore > 60).length} high-risk flights requiring attention. How can I assist you today?`,
+How can I assist you today?`,
       timestamp: new Date(),
     },
   ])
@@ -96,7 +94,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
       timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev: Message[]) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
@@ -125,7 +123,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
         timestamp: new Date(),
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages((prev: Message[]) => [...prev, assistantMessage])
 
       // Check for high-risk flights and show alert if needed
       const highRiskFlights = flights.filter(f => f.riskScore > 80)
@@ -137,7 +135,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
             content: `⚠️ **SAFETY ALERT**: ${highRiskFlights.length} flights have critical risk scores (>80). Consider immediate action for flights: ${highRiskFlights.map(f => `${f.id} (${f.departure}→${f.arrival})`).join(', ')}`,
             timestamp: new Date(),
           }
-          setMessages(prev => [...prev, alertMessage])
+          setMessages((prev: Message[]) => [...prev, alertMessage])
         }, 1000)
       }
 
@@ -149,7 +147,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
         content: "I'm sorry, I encountered an error while processing your request. Please check your connection and try again.",
         timestamp: new Date(),
       }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev: Message[]) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -170,6 +168,10 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
   const handleQuickQuestion = (question: string) => {
     setInput(question)
     setTimeout(() => sendMessage(question), 100)
+  }
+
+  const closeDialog = () => {
+    setIsOpen(false)
   }
 
   return (
@@ -195,7 +197,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-lg h-[700px] flex flex-col p-0">
+        <DialogContent className="max-w-lg h-[700px] flex flex-col p-0" showCloseButton={false}>
           <DialogHeader className="p-4 pb-2 border-b bg-blue-50">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -209,53 +211,55 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
                   </div>
                 </div>
               </DialogTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <Button variant="ghost" size="icon" onClick={closeDialog}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </DialogHeader>
 
-          {/* Messages */}
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[85%] p-3 rounded-lg text-sm ${
-                      message.role === "user"
-                        ? "bg-blue-600 text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                    <div className={`text-xs mt-1 opacity-70 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}>
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {/* Messages - Improved scrollable area */}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea ref={scrollAreaRef} className="h-full p-4">
+              <div className="space-y-4 pb-4">
+                {messages.map((message: Message) => (
+                  <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[85%] p-3 rounded-lg text-sm break-words ${
+                        message.role === "user"
+                          ? "bg-blue-600 text-white rounded-br-sm"
+                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                      }`}
+                    >
+                      <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                      <div className={`text-xs mt-1 opacity-70 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}>
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 p-3 rounded-lg rounded-bl-sm text-sm">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 p-3 rounded-lg rounded-bl-sm text-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                        <div
+                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
 
           {/* Quick Actions */}
-          <div className="px-4 py-2 border-t bg-gray-50">
+          <div className="px-4 py-2 border-t bg-gray-50 flex-shrink-0">
             <div className="text-xs text-gray-600 mb-2">Quick questions:</div>
             <div className="flex flex-wrap gap-1">
               {[
@@ -279,7 +283,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
                 ref={inputRef}
