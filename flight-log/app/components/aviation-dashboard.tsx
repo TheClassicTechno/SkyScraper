@@ -1,17 +1,18 @@
 "use client"
 
-import { useState, useReducer } from "react"
+import { useState, useReducer, useEffect } from "react"
 import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { AIChatAgent } from "./ai-chat-agent"
 import { bookingReducer } from '@/lib/flight-booking'
 import FlightBookingModal from './flight-booking-modal'
 import Link from "next/link"
+import { FlightRoute } from '@/lib/turbulence-data'
 
 // Mock flight data
 const flights = [
@@ -113,7 +114,74 @@ function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
     bookingStep: 'select-provider',
     bookingData: {},
     bookingResult: null
-  });
+  })
+
+  // Generate risk analysis explanation
+  const getRiskAnalysis = () => {
+    const factors = [];
+    
+    // Weather factors
+    if (flight.weather !== 'Clear') {
+      factors.push({
+        factor: 'Weather Conditions',
+        impact: flight.weather === 'Thunderstorms' ? 'High' : 'Moderate',
+        description: `${flight.weather} conditions increase turbulence and visibility risks`,
+        severity: flight.weather === 'Thunderstorms' ? 'red' : 'yellow'
+      });
+    }
+    
+    // ATC Load factors
+    if (flight.atcLoad !== 'Light') {
+      factors.push({
+        factor: 'ATC Load',
+        impact: flight.atcLoad === 'Heavy' ? 'High' : 'Moderate',
+        description: `${flight.atcLoad} air traffic increases collision risk and delays`,
+        severity: flight.atcLoad === 'Heavy' ? 'red' : 'yellow'
+      });
+    }
+    
+    // Aircraft factors
+    if (flight.aircraft.includes('737')) {
+      factors.push({
+        factor: 'Aircraft Model',
+        impact: 'Low',
+        description: 'Boeing 737 has good safety record and modern systems',
+        severity: 'green'
+      });
+    } else if (flight.aircraft.includes('320')) {
+      factors.push({
+        factor: 'Aircraft Model',
+        impact: 'Low',
+        description: 'Airbus A320 has excellent safety features and reliability',
+        severity: 'green'
+      });
+    }
+    
+    // Route factors (simulated)
+    if (flight.departure === 'JFK' && flight.arrival === 'LAX') {
+      factors.push({
+        factor: 'Route Complexity',
+        impact: 'Moderate',
+        description: 'Transcontinental route with multiple weather systems',
+        severity: 'yellow'
+      });
+    }
+    
+    // Time factors
+    const hour = parseInt(flight.departureTime.split(':')[0]);
+    if (hour < 6 || hour > 22) {
+      factors.push({
+        factor: 'Departure Time',
+        impact: 'Moderate',
+        description: 'Night operations have reduced visibility and crew fatigue risks',
+        severity: 'yellow'
+      });
+    }
+    
+    return factors;
+  };
+
+  const riskFactors = getRiskAnalysis();
 
   return (
     <Dialog>
@@ -122,138 +190,397 @@ function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
           View Details
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Flight {flight.id} - Detailed Information</DialogTitle>
+          <DialogTitle className="text-xl flex items-center gap-2">
+            <span className="text-blue-600">🔍</span>
+            Risk Analysis: {flight.id}
+          </DialogTitle>
+          <DialogDescription>
+            Detailed breakdown of factors contributing to the {flight.riskScore}% risk score
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Flight Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Route:</span>
-                  <span>
-                    {flight.departure} → {flight.arrival}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Departure:</span>
-                  <span>{flight.departureTime}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Arrival:</span>
-                  <span>{flight.arrivalTime}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Aircraft:</span>
-                  <span>{flight.aircraft}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Gate:</span>
-                  <span>{flight.gate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Runway:</span>
-                  <span>{flight.runway}</span>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div>
-              <h3 className="font-semibold mb-2">Capacity</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Passengers:</span>
-                  <span>{flight.passengers}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Crew:</span>
-                  <span>{flight.crew}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-col items-center">
-              <h3 className="font-semibold mb-4">ATC Risk Assessment</h3>
-              <RiskScoreCircle score={flight.riskScore} size={140} />
-
-              {flight.riskScore > 60 && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-amber-800">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium">High Risk Alert</span>
+        <div className="space-y-6">
+          {/* Risk Factors Breakdown */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="text-blue-600">⚡</span>
+                Contributing Factors
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {riskFactors.length > 0 ? (
+                  riskFactors.map((factor, index) => (
+                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{factor.factor}</div>
+                        <Badge 
+                          variant={factor.severity === 'red' ? 'destructive' : 
+                                  factor.severity === 'yellow' ? 'secondary' : 'default'}
+                        >
+                          {factor.impact} Impact
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">{factor.description}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <div className="text-2xl mb-2">✅</div>
+                    <div className="font-medium">No significant risk factors detected</div>
+                    <div className="text-sm">All conditions are within normal operating parameters</div>
                   </div>
-                  <p className="text-xs text-amber-700 mt-1">Consider rescheduling due to elevated risk factors</p>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            <div>
-              <h3 className="font-semibold mb-2">Risk Factors</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Weather:</span>
-                  <Badge variant={flight.weather === "Clear" ? "default" : "destructive"}>{flight.weather}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>ATC Load:</span>
-                  <Badge
-                    variant={
-                      flight.atcLoad === "Light"
-                        ? "default"
-                        : flight.atcLoad === "Moderate"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {flight.atcLoad}
-                  </Badge>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          {/* Recommendations */}
+          {flight.riskScore > 60 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <span className="text-amber-600">⚠️</span>
+                  Recommendations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-amber-800 mb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="font-medium">High Risk Flight</span>
+                  </div>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    <li>• Consider alternative departure times to avoid weather</li>
+                    <li>• Monitor weather updates closely before departure</li>
+                    <li>• Use AI route optimization for safer alternatives</li>
+                    <li>• Ensure crew is well-rested for challenging conditions</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {flight.riskScore > 60 && (
-          <div className="mt-6 pt-4 border-t">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => bookingDispatch({ type: 'OPEN_BOOKING', flight: {
-                  id: flight.id,
-                  airline: flight.id.split(/\d/)[0] || 'Unknown',
-                  departure: flight.departure,
-                  arrival: flight.arrival,
-                  departureTime: flight.departureTime,
-                  arrivalTime: flight.arrivalTime,
-                  price: 450, // You may want to use a real price if available
-                  riskScore: flight.riskScore,
-                  delayRate: 10, // Mock value
-                  safetyLogs: ['No recent incidents'], // Mock value
-                } })}
-                className="flex-1"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Reschedule Flight
-              </Button>
-              <Button variant="destructive" className="flex-1">
-                Cancel Flight
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Booking Modal */}
         <FlightBookingModal state={bookingState} dispatch={bookingDispatch} />
       </DialogContent>
     </Dialog>
   )
+}
+
+// AI Flight Recommendations Section Component
+function AIFlightRecommendationsSection({ flights }: { flights: Array<{
+  id: string;
+  departure: string;
+  arrival: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: string;
+  aircraft: string;
+  passengers: number;
+  crew: number;
+  riskScore: number;
+  weather: string;
+  atcLoad: string;
+  runway: string;
+  gate: string;
+}> }) {
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<any>(null);
+  const [bookingState, bookingDispatch] = useReducer(bookingReducer, {
+    isOpen: false,
+    selectedFlight: null,
+    selectedProvider: null,
+    bookingStep: 'select-provider',
+    bookingData: {},
+    bookingResult: null
+  });
+
+  // Listen for AI recommendation requests
+  useEffect(() => {
+    const handleGenerateRecommendations = (event: any) => {
+      const { flight } = event.detail;
+      generateAIRecommendations(flight);
+    };
+
+    window.addEventListener('generateAIRecommendations', handleGenerateRecommendations);
+    
+    return () => {
+      window.removeEventListener('generateAIRecommendations', handleGenerateRecommendations);
+    };
+  }, []);
+
+  const generateAIRecommendations = async (flight?: any) => {
+    setAiLoading(true);
+    setShowRecommendations(true);
+    
+    try {
+      const targetFlight = flight || flights.find((f: any) => f.riskScore > 60) || flights[0];
+      setSelectedFlight(targetFlight);
+
+      // Create route from flight data
+      const route: FlightRoute = {
+        origin: { lat: 40.7128, lng: -74.0060, name: targetFlight.departure, icao: targetFlight.departure },
+        destination: { lat: 34.0522, lng: -118.2437, name: targetFlight.arrival, icao: targetFlight.arrival },
+        currentPosition: { lat: 37.0902, lng: -95.7129, altitude: 35000, timestamp: Date.now() },
+        waypoints: []
+      };
+
+      const response = await fetch('/api/ai-recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          route,
+          aircraftType: 'B737',
+          priority: targetFlight.riskScore > 60 ? 'safety' : 'balanced',
+          includeTurbulenceData: true,
+          originalFlightNumber: targetFlight.id,
+          departure: targetFlight.departure,
+          arrival: targetFlight.arrival,
+          date: targetFlight.date
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiRecommendations(data.recommendations || []);
+      }
+    } catch (error) {
+      console.error('Failed to generate AI recommendations:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  if (!showRecommendations) {
+    return (
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6 transition-all duration-300 ease-in-out">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="text-blue-600">🤖</span>
+            AI Flight Recommendations
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Get safer flight alternatives</span>
+            <div className="flex gap-2">
+              <Button 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
+                onClick={() => {
+                  const highRiskFlight = flights.find((f: any) => f.riskScore > 60);
+                  if (highRiskFlight) {
+                    generateAIRecommendations(highRiskFlight);
+                  }
+                }}
+              >
+                Generate
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="transition-all duration-200"
+                onClick={() => {
+                  generateAIRecommendations(flights[0]);
+                }}
+              >
+                View All
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6 transition-all duration-500 ease-in-out animate-in slide-in-from-top-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-600">🎯</span>
+            AI Flight Recommendations
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowRecommendations(false)}
+            className="transition-all duration-200 hover:bg-gray-50"
+          >
+            Close
+          </Button>
+        </CardTitle>
+        {selectedFlight && (
+          <p className="text-sm text-gray-600">
+            Recommendations for {selectedFlight.airline || selectedFlight.id} ({selectedFlight.departure} → {selectedFlight.arrival})
+          </p>
+        )}
+      </CardHeader>
+      <CardContent className="p-6">
+        {aiLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="text-lg font-medium text-gray-700 mb-2">Analyzing Flight Routes</div>
+              <div className="text-sm text-gray-500">Our AI is analyzing weather patterns, turbulence data, and aircraft capabilities...</div>
+            </div>
+          </div>
+        ) : aiRecommendations.length > 0 ? (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Summary Section */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-blue-600">📊</span>
+                <span className="font-medium text-blue-800">AI Analysis Summary</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-600">Best Alternative:</span>
+                  <div className="font-medium">{aiRecommendations[0].flight.airline} {aiRecommendations[0].flight.id}</div>
+                </div>
+                <div>
+                  <span className="text-blue-600">Risk Reduction:</span>
+                  <div className="font-medium text-green-600">-{aiRecommendations[0].riskImprovement}%</div>
+                </div>
+                <div>
+                  <span className="text-blue-600">Price Savings:</span>
+                  <div className="font-medium text-green-600">${aiRecommendations.reduce((sum, rec) => sum + rec.priceComparison.savings, 0)}</div>
+                </div>
+                <div>
+                  <span className="text-blue-600">Options Available:</span>
+                  <div className="font-medium">{aiRecommendations.length} flights</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Individual Recommendations */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {aiRecommendations.slice(0, 4).map((rec, index) => (
+                <div key={rec.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 animate-in slide-in-from-left-2" style={{ animationDelay: `${index * 100}ms` }}>
+                  {/* Header with Flight Info */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-semibold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-medium">{rec.flight.airline} {rec.flight.id}</div>
+                        <div className="text-sm text-gray-500">{rec.flight.departure} → {rec.flight.arrival}</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline">
+                      {rec.confidence}% confidence
+                    </Badge>
+                  </div>
+                  
+                  {/* Flight Details Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Departure:</span>
+                      <div className="font-medium">{rec.flight.departureTime}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Arrival:</span>
+                      <div className="font-medium">{rec.flight.arrivalTime}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Price:</span>
+                      <div className="font-medium flex items-center gap-2">
+                        ${rec.flight.price}
+                        {rec.priceComparison.savings > 0 && (
+                          <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
+                            Save ${rec.priceComparison.savings}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Risk:</span>
+                      <div className="font-medium flex items-center gap-2">
+                        {rec.flight.riskScore}%
+                        {rec.riskImprovement > 0 && (
+                          <Badge variant="default" className="bg-blue-100 text-blue-700 border-blue-200">
+                            -{rec.riskImprovement}%
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Scores Row */}
+                  <div className="flex items-center gap-4 mb-3 text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Safety:</span>
+                      <span className="font-semibold text-green-600">{Math.round(rec.safetyScore)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Efficiency:</span>
+                      <span className="font-semibold text-blue-600">{Math.round(rec.efficiencyScore)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Comfort:</span>
+                      <span className="font-semibold text-purple-600">{Math.round(rec.comfortScore)}</span>
+                    </div>
+                  </div>
+
+                  {/* AI Explanation */}
+                  <p className="text-sm text-gray-600 mb-3">{rec.explanation.safetyImprovement}</p>
+
+                  {/* Booking Options */}
+                  {rec.bookingOptions && rec.bookingOptions.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700">Book:</span>
+                      {rec.bookingOptions.map((option: any, optIndex: number) => (
+                        <Button
+                          key={optIndex}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs transition-all duration-200 hover:bg-blue-50"
+                          onClick={() => {
+                            bookingDispatch({ 
+                              type: 'OPEN_BOOKING', 
+                              flight: {
+                                id: rec.flight.id,
+                                airline: rec.flight.airline,
+                                departure: rec.flight.departure,
+                                arrival: rec.flight.arrival,
+                                departureTime: rec.flight.departureTime,
+                                arrivalTime: rec.flight.arrivalTime,
+                                price: rec.flight.price,
+                                riskScore: rec.flight.riskScore,
+                                delayRate: rec.flight.delayRate,
+                                safetyLogs: rec.flight.safetyLogs,
+                              }
+                            });
+                          }}
+                        >
+                          {option.provider.logo} {option.provider.name}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No AI recommendations available. Try generating recommendations for a different flight.
+          </div>
+        )}
+      </CardContent>
+      
+      {/* Booking Modal */}
+      <FlightBookingModal state={bookingState} dispatch={bookingDispatch} />
+    </Card>
+  );
 }
 
 export default function AviationDashboard() {
@@ -298,13 +625,7 @@ export default function AviationDashboard() {
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6">
         {/* Hero Section */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <Link href="/">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
+          <div className="flex items-center justify-center mb-4">
             <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium">
               <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
               ATC Risk Management & Flight Operations
@@ -446,6 +767,9 @@ export default function AviationDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Flight Recommendations */}
+        <AIFlightRecommendationsSection flights={flights} />
 
         {/* AI Chat Agent */}
         <AIChatAgent flights={flights} />

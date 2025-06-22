@@ -41,9 +41,9 @@ import {
 } from "@/lib/flight-booking"
 import { 
   type FlightRecommendation,
-  type AIRecommendationContext,
-  MockAIRecommendationService
+  aiRecommendationEngine
 } from "@/lib/ai-flight-recommendations"
+import { FlightRoute } from "@/lib/turbulence-data"
 
 interface FlightBookingModalProps {
   state: BookingModalState;
@@ -120,32 +120,34 @@ function AIRecommendationCard({
   onSelect 
 }: { 
   recommendation: FlightRecommendation; 
-  onSelect: (flight: AlternativeFlight) => void;
+  onSelect: (route: FlightRoute) => void;
 }) {
-  const { flight, score, reasoning, category, tags } = recommendation;
+  const { safetyScore, efficiencyScore, comfortScore, explanation, priority } = recommendation;
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
       case 'safety': return 'text-green-600 bg-green-50';
-      case 'price': return 'text-blue-600 bg-blue-50';
-      case 'convenience': return 'text-purple-600 bg-purple-50';
-      case 'premium': return 'text-amber-600 bg-amber-50';
+      case 'efficiency': return 'text-blue-600 bg-blue-50';
+      case 'comfort': return 'text-purple-600 bg-purple-50';
+      case 'balanced': return 'text-amber-600 bg-amber-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
       case 'safety': return <Shield className="h-4 w-4" />;
-      case 'price': return <TrendingUp className="h-4 w-4" />;
-      case 'convenience': return <Clock className="h-4 w-4" />;
-      case 'premium': return <Star className="h-4 w-4" />;
+      case 'efficiency': return <TrendingUp className="h-4 w-4" />;
+      case 'comfort': return <Clock className="h-4 w-4" />;
+      case 'balanced': return <Star className="h-4 w-4" />;
       default: return <Star className="h-4 w-4" />;
     }
   };
 
+  const overallScore = Math.round((safetyScore + efficiencyScore + comfortScore) / 3);
+
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer border-2 border-blue-200 bg-blue-50" onClick={() => onSelect(flight)}>
+    <Card className="hover:shadow-md transition-shadow cursor-pointer border-2 border-blue-200 bg-blue-50" onClick={() => onSelect(recommendation.route)}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -153,24 +155,24 @@ function AIRecommendationCard({
               <Brain className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h4 className="font-semibold">{flight.airline} {flight.id}</h4>
+              <h4 className="font-semibold">AI Route Recommendation</h4>
               <div className="flex items-center gap-2">
-                <Badge className={`text-xs ${getCategoryColor(category)}`}>
-                  {getCategoryIcon(category)}
-                  <span className="ml-1">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                <Badge className={`text-xs ${getPriorityColor(priority)}`}>
+                  {getPriorityIcon(priority)}
+                  <span className="ml-1">{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {score}% Score
+                  {overallScore}% Score
                 </Badge>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-green-600">
-              {formatPrice(flight.price)}
+            <div className="text-sm text-gray-600">
+              FL{Math.round((recommendation.route.currentPosition?.altitude || 35000) / 1000)}
             </div>
-            <Badge variant={flight.riskScore <= 30 ? "default" : "secondary"}>
-              {flight.riskScore}% Risk
+            <Badge variant={safetyScore >= 80 ? "default" : "secondary"}>
+              {safetyScore}% Safety
             </Badge>
           </div>
         </div>
@@ -178,7 +180,7 @@ function AIRecommendationCard({
         {/* AI Reasoning */}
         <div className="mb-3">
           <p className="text-sm text-gray-600">
-            {reasoning[0]}
+            {explanation.safetyImprovement}
           </p>
         </div>
 
@@ -187,11 +189,11 @@ function AIRecommendationCard({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            onSelect(flight);
+            onSelect(recommendation.route);
           }}
         >
           <Brain className="h-4 w-4 mr-2" />
-          Book AI Recommended Flight
+          Use AI Recommended Route
         </Button>
       </CardContent>
     </Card>
@@ -214,25 +216,40 @@ function AIRecommendationsSection({
     const loadRecommendations = async () => {
       setLoading(true);
       try {
-        const aiService = new MockAIRecommendationService();
-        const context: AIRecommendationContext = {
-          originalFlight: {
-            id: originalFlight.id,
-            airline: originalFlight.airline,
-            departure: originalFlight.departure,
-            arrival: originalFlight.arrival,
-            riskScore: originalFlight.riskScore,
-            price: originalFlight.price,
-            departureTime: originalFlight.departureTime,
-            userPreferences: {
-              budget: 'medium',
-              priority: 'safety',
-              cabinClass: 'economy'
-            }
-          }
+        // Create a sample route from the original flight
+        const sampleRoute: FlightRoute = {
+          origin: { lat: 40.7128, lng: -74.0060, name: 'JFK', icao: 'KJFK' },
+          destination: { lat: 34.0522, lng: -118.2437, name: 'LAX', icao: 'KLAX' },
+          currentPosition: { lat: 37.0902, lng: -95.7129, altitude: 35000, timestamp: Date.now() },
+          waypoints: []
         };
-        
-        const results = await aiService.getRecommendations(alternatives, context);
+
+        // Sample turbulence data
+        const sampleTurbulenceData = [
+          {
+            id: 'turb-1',
+            latitude: 37.0902,
+            longitude: -95.7129,
+            altitude: 35000,
+            severity: 'moderate' as const,
+            edrValue: 0.25,
+            source: 'EDR' as const,
+            timestamp: new Date().toISOString(),
+            etaToSmootherAir: 45,
+            description: 'Mountain wave turbulence due to strong crosswinds',
+            affectedAltitudeRange: [33000, 37000] as [number, number],
+            weather_conditions: 'Clear',
+            wind_shear: 15,
+            temperature_gradient: 2
+          }
+        ];
+
+        const results = await aiRecommendationEngine.generateRecommendations(
+          sampleRoute,
+          sampleTurbulenceData,
+          'B737',
+          'balanced'
+        );
         setRecommendations(results);
       } catch (error) {
         console.error('Failed to load AI recommendations:', error);
@@ -256,7 +273,7 @@ function AIRecommendationsSection({
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
-        <h2 className="text-lg font-semibold">AI Flight Recommendations</h2>
+        <h2 className="text-lg font-semibold">AI Route Recommendations</h2>
       </div>
 
       <div className="space-y-4">
@@ -264,7 +281,17 @@ function AIRecommendationsSection({
           <AIRecommendationCard
             key={index}
             recommendation={recommendation}
-            onSelect={onSelectFlight}
+            onSelect={(route) => {
+              // Convert route back to flight format for compatibility
+              const recommendedFlight: AlternativeFlight = {
+                ...originalFlight,
+                id: `AI-${index + 1}`,
+                airline: 'AI Optimized',
+                riskScore: Math.round(100 - recommendation.safetyScore),
+                price: originalFlight.price + (recommendation.timePenalty * 2) // Add time penalty cost
+              };
+              onSelectFlight(recommendedFlight);
+            }}
           />
         ))}
       </div>
