@@ -1259,14 +1259,7 @@ export default function AviationDashboard() {
         {/* AI Chat Agent */}
         <div className="fixed bottom-6 right-6 z-50 flex gap-4">
           <AIChatAgent flights={flights} userProfile={userProfile} />
-          {/* Speech Translator Button */}
-          <button
-            onClick={() => setShowSpeechTranslator(true)}
-            className="h-14 w-14 rounded-full shadow-lg bg-purple-600 hover:bg-purple-700 transition-all duration-200 hover:scale-105 flex items-center justify-center"
-            aria-label="Open Speech Translator"
-          >
-            <Languages className="h-6 w-6 text-white" />
-          </button>
+
         </div>
       </main>
 
