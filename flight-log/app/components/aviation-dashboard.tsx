@@ -14,7 +14,12 @@ import Link from "next/link"
 import { FlightRoute } from '@/lib/turbulence-data'
 import { fetchFlightData } from '@/lib/aviation-apis'
 import { Input } from "@/components/ui/input"
+<<<<<<< HEAD
 import { FlightBookingService, bookingProviders } from '@/lib/flight-booking'
+=======
+import { VapidAgent } from "./vapid-chat-agent"
+
+>>>>>>> 46cbec98b61c326aa9dd73c30f60968d25f2a072
 
 // Mock flight data
 
@@ -90,10 +95,10 @@ const fallbackFlights: Flight[] = [
 // Function to convert API data to Flight format with hardcoded stats for three flights
 function convertToFlightFormat(apiData: any): Flight[] {
   if (!apiData || !apiData.data || apiData.data.length === 0) return [];
-  
+
   return apiData.data.map((item: any) => {
     const flightNumber = item.flight?.iata || 'UNKNOWN';
-    
+
     // Hardcoded stats for the three flights
     const flightStats: Record<string, any> = {
       'DL1102': {
@@ -124,7 +129,7 @@ function convertToFlightFormat(apiData: any): Flight[] {
         gate: 'C15'
       }
     };
-    
+
     const stats = flightStats[flightNumber] || {
       passengers: 150,
       crew: 6,
@@ -134,7 +139,7 @@ function convertToFlightFormat(apiData: any): Flight[] {
       runway: null,
       gate: null
     };
-    
+
     return {
       id: flightNumber,
       departure: item.departure?.iata || 'UNKNOWN',
@@ -207,7 +212,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
   // Generate risk analysis explanation
   const getRiskAnalysis = () => {
     const factors = [];
-    
+
     // Weather factors
     if (flight.weather !== 'Clear') {
       factors.push({
@@ -217,7 +222,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
         severity: flight.weather === 'Thunderstorms' ? 'red' : 'yellow'
       });
     }
-    
+
     // ATC Load factors
     if (flight.atcLoad !== 'Light') {
       factors.push({
@@ -227,7 +232,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
         severity: flight.atcLoad === 'Heavy' ? 'red' : 'yellow'
       });
     }
-    
+
     // Aircraft factors
     if (flight.aircraft?.includes('737')) {
       factors.push({
@@ -244,7 +249,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
         severity: 'green'
       });
     }
-    
+
     // Route factors (simulated)
     if (flight.departure === 'JFK' && flight.arrival === 'LAX') {
       factors.push({
@@ -254,7 +259,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
         severity: 'yellow'
       });
     }
-    
+
     // Time factors
     const hour = parseInt(flight.departureTime.split(':')[0]);
     if (hour < 6 || hour > 22) {
@@ -265,7 +270,7 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
         severity: 'yellow'
       });
     }
-    
+
     return factors;
   };
 
@@ -305,9 +310,9 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
                     <div key={index} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-medium">{factor.factor}</div>
-                        <Badge 
-                          variant={factor.severity === 'red' ? 'destructive' : 
-                                  factor.severity === 'yellow' ? 'secondary' : 'default'}
+                        <Badge
+                          variant={factor.severity === 'red' ? 'destructive' :
+                            factor.severity === 'yellow' ? 'secondary' : 'default'}
                         >
                           {factor.impact} Impact
                         </Badge>
@@ -361,22 +366,24 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
 }
 
 // AI Flight Recommendations Section Component
-function AIFlightRecommendationsSection({ flights }: { flights: Array<{
-  id: string;
-  departure: string;
-  arrival: string;
-  departureTime: string;
-  arrivalTime: string;
-  date: string;
-  aircraft: string;
-  passengers: number;
-  crew: number;
-  riskScore: number;
-  weather: string;
-  atcLoad: string;
-  runway: string;
-  gate: string;
-}> }) {
+function AIFlightRecommendationsSection({ flights }: {
+  flights: Array<{
+    id: string;
+    departure: string;
+    arrival: string;
+    departureTime: string;
+    arrivalTime: string;
+    date: string;
+    aircraft: string;
+    passengers: number;
+    crew: number;
+    riskScore: number;
+    weather: string;
+    atcLoad: string;
+    runway: string;
+    gate: string;
+  }>
+}) {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -398,7 +405,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
     };
 
     window.addEventListener('generateAIRecommendations', handleGenerateRecommendations);
-    
+
     return () => {
       window.removeEventListener('generateAIRecommendations', handleGenerateRecommendations);
     };
@@ -407,7 +414,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
   const generateAIRecommendations = async (flight?: any) => {
     setAiLoading(true);
     setShowRecommendations(true);
-    
+
     try {
       const targetFlight = flight || flights.find((f: any) => f.riskScore > 60) || flights[0];
       setSelectedFlight(targetFlight);
@@ -459,7 +466,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Get safer alternatives for high-risk flights</span>
             <div className="flex gap-2">
-              <Button 
+              <Button
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
                 onClick={() => {
@@ -487,8 +494,8 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
             AI Flight Recommendations
             <span className="text-sm text-red-600 font-normal">(High-Risk Flights Only)</span>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => setShowRecommendations(false)}
             className="transition-all duration-200 hover:bg-gray-50"
@@ -555,7 +562,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Flight Details Grid */}
                   <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
                     <div>
@@ -615,6 +622,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
                   {rec.bookingOptions && rec.bookingOptions.length > 0 && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-700">Book:</span>
+<<<<<<< HEAD
                       {rec.bookingOptions.map((option: any, optIndex: number) => {
                         const bookingService = new FlightBookingService();
                         const bookingUrls = bookingService.getBookingUrls(rec.flight);
@@ -629,6 +637,28 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
                             onClick={() => {
                               if (bookingUrl) {
                                 window.open(bookingUrl, '_blank');
+=======
+                      {rec.bookingOptions.map((option: any, optIndex: number) => (
+                        <Button
+                          key={optIndex}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs transition-all duration-200 hover:bg-blue-50"
+                          onClick={() => {
+                            bookingDispatch({
+                              type: 'OPEN_BOOKING',
+                              flight: {
+                                id: rec.flight.id,
+                                airline: rec.flight.airline,
+                                departure: rec.flight.departure,
+                                arrival: rec.flight.arrival,
+                                departureTime: rec.flight.departureTime,
+                                arrivalTime: rec.flight.arrivalTime,
+                                price: rec.flight.price,
+                                riskScore: rec.flight.riskScore,
+                                delayRate: rec.flight.delayRate,
+                                safetyLogs: rec.flight.safetyLogs,
+>>>>>>> 46cbec98b61c326aa9dd73c30f60968d25f2a072
                               }
                             }}
                           >
@@ -649,7 +679,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
           </div>
         )}
       </CardContent>
-      
+
       {/* Booking Modal */}
       <FlightBookingModal state={bookingState} dispatch={bookingDispatch} />
     </Card>
@@ -668,10 +698,10 @@ export default function AviationDashboard() {
       setFlights([]);
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const flightPromises = flightNumbers.map(async (flightNumber) => {
         try {
@@ -685,14 +715,14 @@ export default function AviationDashboard() {
 
       const results = await Promise.all(flightPromises);
       const validResults = results.filter(result => result !== null);
-      
+
       if (validResults.length > 0) {
         const allFlights: Flight[] = [];
         validResults.forEach(result => {
           const convertedFlights = convertToFlightFormat(result);
           allFlights.push(...convertedFlights);
         });
-        
+
         setFlights(allFlights);
         setLastUpdated(new Date());
       } else {
@@ -714,14 +744,14 @@ export default function AviationDashboard() {
     // Check if there's stored flight data from the main page search
     const storedFlightData = sessionStorage.getItem('flightData');
     const searchedFlightNumber = sessionStorage.getItem('searchedFlightNumber');
-    
+
     if (storedFlightData) {
       try {
         const parsedData = JSON.parse(storedFlightData);
         setFlights(parsedData);
         setLastUpdated(new Date());
         console.log('Using stored flight data:', parsedData);
-        
+
         // Clear the stored data after using it
         sessionStorage.removeItem('flightData');
         sessionStorage.removeItem('searchedFlightNumber');
@@ -781,7 +811,7 @@ export default function AviationDashboard() {
             Aviation Safety
             <span className="block text-blue-600">Dashboard</span>
           </h1>
-          
+
           {/* Available Flights Section */}
           <div className="mb-6">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
@@ -811,7 +841,7 @@ export default function AviationDashboard() {
               </div>
             </div>
           </div>
-          
+
           {/* Search and Refresh Section */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
             <div className="flex gap-2 max-w-md mx-auto sm:mx-0">
@@ -827,7 +857,7 @@ export default function AviationDashboard() {
                   }
                 }}
               />
-              <Button 
+              <Button
                 onClick={() => {
                   const input = document.querySelector('input[placeholder*="Enter flight"]') as HTMLInputElement;
                   if (input?.value.trim()) {
@@ -841,11 +871,11 @@ export default function AviationDashboard() {
                 Search
               </Button>
             </div>
-            <Button 
+            <Button
               onClick={() => {
                 setFlights([]);
                 setError(null);
-              }} 
+              }}
               disabled={loading}
               className="flex items-center gap-2"
             >
@@ -853,7 +883,7 @@ export default function AviationDashboard() {
               Clear Data
             </Button>
           </div>
-          
+
           {error && (
             <div className="flex justify-center mb-4">
               <Badge variant="destructive" className="flex items-center gap-2">
@@ -957,7 +987,10 @@ export default function AviationDashboard() {
         )}
 
         {/* AI Chat Agent */}
-        <AIChatAgent flights={flights} />
+        <div className="w-[50vh] fixed bottom-6 z-50 flex gap-3">
+          <AIChatAgent flights={flights} />
+          <VapidAgent />
+        </div>
       </main>
 
       {/* Footer */}

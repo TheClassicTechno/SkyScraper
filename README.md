@@ -13,3 +13,6 @@ Multi-level Fallback: Google Translate → Basic Translate → Error handling
 
 
 
+git checkout main
+git pull origin main
+git push origin main

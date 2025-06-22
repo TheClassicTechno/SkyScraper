@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flight Communication System</title>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         * {
@@ -147,6 +146,28 @@
             border: 1px solid #f5c6cb;
         }
 
+        .recognized-speech {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .recognized-speech h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .recognized-speech-text {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 500;
+        }
+
         .results {
             margin-top: 30px;
         }
@@ -173,7 +194,7 @@
 
         .result-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
             flex-wrap: wrap;
@@ -337,10 +358,14 @@
         <div id="status" class="status">
             Ready to connect...
         </div>
-        <!-- Add this inside <body> -->
-        <div>
-        <h3>Recognized Speech:</h3>
-        <div id="recognized-speech" style="font-size:1.2em; color:#333; margin-bottom:1em;"></div>
+
+        <div class="recognized-speech">
+            <div>
+                <h3>🎙️ Recognized Speech:</h3>
+                <div id="recognized-speech-text" class="recognized-speech-text">
+                    Waiting for speech...
+                </div>
+            </div>
         </div>
 
         <div class="manual-input">
@@ -393,6 +418,7 @@
                 this.manualText = document.getElementById('manualText');
                 this.sourceLanguage = document.getElementById('sourceLanguage');
                 this.translateBtn = document.getElementById('translateBtn');
+                this.recognizedSpeechText = document.getElementById('recognized-speech-text');
             }
 
             connectSocket() {
@@ -403,6 +429,7 @@
                 this.socket.on('connect', () => {
                     this.isConnected = true;
                     this.updateStatus('Connected to flight communication system', 'connected');
+                    console.log('✅ Connected to server');
                 });
 
                 this.socket.on('disconnect', () => {
@@ -410,25 +437,49 @@
                     this.isListening = false;
                     this.updateMicButton();
                     this.updateStatus('Disconnected from server', 'error');
+                    console.log('❌ Disconnected from server');
                 });
 
                 this.socket.on('status', (data) => {
                     this.updateStatus(data.message, this.isListening ? 'listening' : 'connected');
+                    console.log('📊 Status:', data);
                 });
 
-                this.socket.on('speech_result', (data) => {
-                    // Display the recognized speech
-                    document.getElementById('recognized-speech').textContent = data.original_text || '';
-                    this.displayResult(data); // keep showing the result as before
+                //✅ FIXED: Listen for 'speech_recognized' (matches backend)
+                this.socket.on('speech_recognized', (data) => {
+                    console.log('🎙️ Speech recognized:', data);
+                    this.displayRecognizedSpeech(data.original_text || '');
                 });
+                // socket.on('speech_recognized', function(data) {
+                //     console.log('🎙️ Speech recognized:', data);
+                //     document.getElementById('recognized-speech-text').textContent = data.original_text || '';
+                // });
 
+                // This handles the translation display
                 this.socket.on('translation_result', (data) => {
+                    console.log('🔄 Translation result:', data);
                     this.displayResult(data);
                 });
 
                 this.socket.on('error', (data) => {
+                    console.error('❌ Socket error:', data);
                     this.updateStatus(`Error: ${data.message}`, 'error');
                 });
+
+                // Add debugging for all events
+                this.socket.onAny((eventName, ...args) => {
+                    console.log(`📡 Received event: ${eventName}`, args);
+                });
+            }
+
+            displayRecognizedSpeech(text) {
+                if (text && text.trim()) {
+                    this.recognizedSpeechText.textContent = text;
+                    this.recognizedSpeechText.style.fontStyle = 'normal';
+                } else {
+                    this.recognizedSpeechText.textContent = 'Listening...';
+                    this.recognizedSpeechText.style.fontStyle = 'italic';
+                }
             }
 
             setupEventListeners() {
@@ -455,9 +506,9 @@
             async requestMicrophonePermission() {
                 try {
                     await navigator.mediaDevices.getUserMedia({ audio: true });
-                    console.log('Microphone permission granted');
+                    console.log('🎤 Microphone permission granted');
                 } catch (error) {
-                    console.error('Microphone permission denied:', error);
+                    console.error('🎤 Microphone permission denied:', error);
                     this.updateStatus('Microphone permission required for speech recognition', 'error');
                 }
             }
@@ -478,20 +529,27 @@
             startListening() {
                 const targetLang = this.targetLanguage.value;
                 
+                console.log(`🎙️ Starting to listen for ${targetLang}`);
+                
                 this.socket.emit('start_listening', {
-                    language: targetLang
+                    language: targetLang,
+                    context: 'aviation',
+                    sensitivity: 0.5
                 });
                 
                 this.isListening = true;
                 this.updateMicButton();
                 this.updateStatus(`Listening for ${this.getLanguageName(targetLang)}...`, 'listening');
+                this.displayRecognizedSpeech('Listening...');
             }
 
             stopListening() {
+                console.log('🛑 Stopping listening');
                 this.socket.emit('stop_listening');
                 this.isListening = false;
                 this.updateMicButton();
                 this.updateStatus('Listening stopped', 'connected');
+                this.displayRecognizedSpeech('Waiting for speech...');
             }
 
             translateManualText() {
@@ -501,10 +559,13 @@
                 const sourceLang = this.sourceLanguage.value;
                 const targetLang = this.targetLanguage.value;
 
+                console.log(`🔄 Manual translation: "${text}" from ${sourceLang} to ${targetLang}`);
+
                 this.socket.emit('translate_text', {
                     text: text,
                     source_language: sourceLang,
-                    target_language: targetLang
+                    target_language: targetLang,
+                    context: 'general'
                 });
 
                 this.translateBtn.innerHTML = 'Translating... <div class="loading"></div>';
@@ -545,6 +606,7 @@
                     <div class="result-header">
                         <div>
                             <span class="language-badge">${sourceLang} → ${targetLang}</span>
+                            <small style="margin-left: 10px; color: #666;">(${data.method || 'unknown'})</small>
                         </div>
                         <span class="timestamp">${timestamp}</span>
                     </div>
@@ -582,6 +644,7 @@
 
         // Initialize the app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Flight Communication App starting...');
             new FlightCommunicationApp();
         });
     </script>
