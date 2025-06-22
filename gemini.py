@@ -148,7 +148,7 @@ class GeminiTranslator:
             genai.configure(api_key=api_key)
             
             # Use Gemini Pro model for text processing
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-2.5-pro')
             self.is_initialized = True
             print("Gemini AI translator initialized successfully")
             
@@ -243,15 +243,14 @@ class GeminiTranslator:
                 'method': 'none',
                 'error': 'Empty text'
             }
-        
+
         # Auto-detect source language if needed
         if source_lang == 'auto':
             source_lang = self.detect_language(text)
             print(f"DEBUG: Detected language: {source_lang} for text: '{text}'")
-        
+
         # Skip translation if same language (but be less aggressive)
         if source_lang == target_lang and len(text) > 5:
-            # Double-check with pattern detection for short phrases
             double_check = self._pattern_detect(text.lower())
             if double_check == target_lang:
                 return {
@@ -260,9 +259,9 @@ class GeminiTranslator:
                     'confidence': 1.0,
                     'method': 'no_translation_needed'
                 }
-        
+
         print(f"DEBUG: Attempting translation from {source_lang} to {target_lang}")
-        
+
         # Try Google Translate FIRST (more reliable for simple phrases)
         if USE_GOOGLE_TRANS:
             try:
@@ -273,9 +272,9 @@ class GeminiTranslator:
                     return result
             except Exception as e:
                 print(f"DEBUG: Google Translate error: {e}")
-        
-        # Fallback to Gemini AI (but with better prompting)
-        if self.is_initialized and self.model:
+
+        # Only use Gemini for longer or less common phrases
+        if self.is_initialized and self.model and len(text.strip()) > 10:
             try:
                 print("DEBUG: Trying Gemini translation...")
                 result = self._gemini_translate_improved(text, source_lang, target_lang, context)
@@ -283,8 +282,13 @@ class GeminiTranslator:
                     print(f"DEBUG: Gemini success: {result['translated_text']}")
                     return result
             except Exception as e:
+                # 2. Handle the 429 Error Gracefully
+                if "429" in str(e):
+                    print("Gemini API quota exceeded. Falling back to basic translation.")
+                    # Fallback to basic translation
+                    return self._basic_translate(text, source_lang, target_lang)
                 print(f"DEBUG: Gemini translation error: {e}")
-        
+
         # Final fallback
         return self._basic_translate(text, source_lang, target_lang)
 
@@ -489,7 +493,7 @@ class EnhancedAudioProcessor:
             
             # Primary: Google Speech Recognition
             try:
-                text = recognizer.recognize_google(audio, language=None)
+                text = recognizer.recognize_google(audio)
             except (sr.UnknownValueError, sr.RequestError):
                 pass
             
@@ -643,33 +647,52 @@ def handle_translate(data):
         print(error_msg)
         emit('error', {'message': error_msg})
 
+
 if __name__ == '__main__':
-    # Set up logging
+    import eventlet
+    import eventlet.wsgi
     logging.basicConfig(level=logging.INFO)
-    
-    # Print enhanced system status
-    print("\n" + "="*60)
-    print("🚀 ENHANCED Flight Communication App Starting...")
-    print("="*60)
-    print(f"🎤 Speech Recognition: {'✅ Available' if USE_SPEECH else '❌ Not Available'}")
-    print(f"🤖 Gemini AI: {'✅ Available' if USE_GEMINI and translator.is_initialized else '❌ Not Available'}")
-    print(f"🌐 Google Translate: {'✅ Available' if USE_GOOGLE_TRANS else '❌ Not Available'}")
-    print(f"📝 Basic Translate: {'✅ Available' if USE_TRANSLATE_LIB else '❌ Not Available'}")
-    print(f"🌍 Languages Supported: {len(LANGUAGES)}")
-    print("="*60)
-    
-    if USE_GEMINI and not translator.is_initialized:
-        print("⚠️  To enable Gemini AI translation:")
-        print("   1. Get API key from: https://makersuite.google.com/app/apikey")
-        print("   2. Set environment variable: export GEMINI_API_KEY='your-key-here'")
-        print("   3. Install: pip install google-generativeai")
-        print("="*60)
-    
-    # Run the enhanced app
+    print("\n" + "="*50)
+    print("Flight Communication App Starting...")
+    print("="*50)
+    print(f"Speech Recognition Available: {USE_SPEECH}")
+    print(f"Translation Library Available: {USE_TRANSLATE_LIB}")
+    print(f"Supported Languages: {len(LANGUAGES)}")
+    print("="*50)
     try:
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down enhanced system...")
+        print("\nShutting down...")
     except Exception as e:
-        print(f"❌ Error starting enhanced server: {e}")
-        print("💡 Try running with: python enhanced_app.py")
+        print(f"Error starting server: {e}")
+        print("Try running with: python app.py")
+# if __name__ == '__main__':
+#     # Set up logging
+#     logging.basicConfig(level=logging.INFO)
+    
+#     # Print enhanced system status
+#     print("\n" + "="*60)
+#     print("🚀 ENHANCED Flight Communication App Starting...")
+#     print("="*60)
+#     print(f"🎤 Speech Recognition: {'✅ Available' if USE_SPEECH else '❌ Not Available'}")
+#     print(f"🤖 Gemini AI: {'✅ Available' if USE_GEMINI and translator.is_initialized else '❌ Not Available'}")
+#     print(f"🌐 Google Translate: {'✅ Available' if USE_GOOGLE_TRANS else '❌ Not Available'}")
+#     print(f"📝 Basic Translate: {'✅ Available' if USE_TRANSLATE_LIB else '❌ Not Available'}")
+#     print(f"🌍 Languages Supported: {len(LANGUAGES)}")
+#     print("="*60)
+    
+#     if USE_GEMINI and not translator.is_initialized:
+#         print("⚠️  To enable Gemini AI translation:")
+#         print("   1. Get API key from: https://makersuite.google.com/app/apikey")
+#         print("   2. Set environment variable: export GEMINI_API_KEY='your-key-here'")
+#         print("   3. Install: pip install google-generativeai")
+#         print("="*60)
+    
+#     # Run the enhanced app
+#     try:
+#         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+#     except KeyboardInterrupt:
+#         print("\n🛑 Shutting down enhanced system...")
+#     except Exception as e:
+#         print(f"❌ Error starting enhanced server: {e}")
+#         print("💡 Try running with: python enhanced_app.py")
