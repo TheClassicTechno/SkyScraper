@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plane, Shield, Clock, MapPin, Star, AlertTriangle } from "lucide-react"
+import { Search, Plane, Shield} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from 'next/navigation';
 import { Badge } from "@/components/ui/badge"
@@ -26,28 +25,7 @@ const MainPage = () => {
         atcLoad: string;
         runway: string;
         gate: string;
-      };
-
-    function convertToFlightFormat(apiData: any): Flight[] {
-        if (!apiData || !apiData.data || apiData.data.length === 0) return [];
-      
-        return apiData.data.map((item: any) => ({
-          id: item.flight?.iata || 'UNKNOWN',
-          departure: item.departure?.iata || 'UNKNOWN',
-          arrival: item.arrival?.iata || 'UNKNOWN',
-          departureTime: item.departure?.scheduled ? new Date(item.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
-          arrivalTime: item.arrival?.scheduled ? new Date(item.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
-          date: item.flight_date || 'UNKNOWN',
-          aircraft: item.aircraft?.model || 'Unknown Aircraft',
-          passengers: Math.floor(Math.random() * 200) + 50, // Mock passenger count
-          crew: Math.floor(Math.random() * 8) + 4, // Mock crew count
-          riskScore: Math.floor(Math.random() * 100), // Mock risk score
-          weather: 'Unknown', // You can hook to weather API here
-          atcLoad: 'Unknown', // Placeholder or compute based on conditions
-          runway: item.arrival?.runway || null,
-          gate: item.arrival?.gate || null,
-        }));
-      }     
+      };    
       
     const router = useRouter();
 

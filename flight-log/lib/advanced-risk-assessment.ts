@@ -70,9 +70,9 @@ const createFlightRiskBayesianNetwork = (): BayesianNetwork => ({
       parents: [],
       states: ['excellent', 'good', 'moderate', 'poor', 'severe'],
       probabilities: {
-        'excellent': 0.3,
-        'good': 0.4,
-        'moderate': 0.2,
+        'excellent': 0.4,
+        'good': 0.35,
+        'moderate': 0.15,
         'poor': 0.08,
         'severe': 0.02
       }
@@ -97,10 +97,10 @@ const createFlightRiskBayesianNetwork = (): BayesianNetwork => ({
       parents: [],
       states: ['expert', 'experienced', 'moderate', 'inexperienced'],
       probabilities: {
-        'expert': 0.2,
+        'expert': 0.3,
         'experienced': 0.5,
-        'moderate': 0.25,
-        'inexperienced': 0.05
+        'moderate': 0.18,
+        'inexperienced': 0.02
       }
     },
     {
@@ -157,115 +157,115 @@ class MonteCarloRiskSimulator {
     return scale * Math.pow(-Math.log(1 - u), 1 / shape);
   }
 
-  // Monte Carlo simulation for weather risk
+  // Monte Carlo simulation for weather risk - ADJUSTED FOR CONSERVATIVE SCORING
   private simulateWeatherRisk(weather: AdvancedRiskFactors['weather']): number[] {
     const results: number[] = [];
     
     for (let i = 0; i < this.iterations; i++) {
       let risk = 0;
       
-      // Base weather condition risk
+      // Base weather condition risk - REDUCED VALUES
       const weatherSeverity = {
-        'Clear': this.sampleNormal(5, 2),
-        'Partly Cloudy': this.sampleNormal(10, 3),
-        'Cloudy': this.sampleNormal(15, 4),
-        'Light Rain': this.sampleNormal(25, 6),
-        'Heavy Rain': this.sampleNormal(45, 8),
-        'Thunderstorms': this.sampleNormal(75, 12),
-        'Snow': this.sampleNormal(60, 10),
-        'Ice': this.sampleNormal(85, 8),
-        'Fog': this.sampleNormal(70, 9),
-        'High Winds': this.sampleNormal(65, 7)
-      }[weather.condition] || 20;
+        'Clear': this.sampleNormal(2, 1),
+        'Partly Cloudy': this.sampleNormal(4, 1.5),
+        'Cloudy': this.sampleNormal(6, 2),
+        'Light Rain': this.sampleNormal(10, 2.5),
+        'Heavy Rain': this.sampleNormal(18, 3),
+        'Thunderstorms': this.sampleNormal(35, 5),
+        'Snow': this.sampleNormal(25, 4),
+        'Ice': this.sampleNormal(40, 4),
+        'Fog': this.sampleNormal(30, 4),
+        'High Winds': this.sampleNormal(28, 3)
+      }[weather.condition] || 8;
 
-      // Visibility impact (log-normal distribution)
-      const visibilityImpact = weather.visibility < 1 ? this.sampleLogNormal(30, 0.5) :
-                              weather.visibility < 3 ? this.sampleLogNormal(15, 0.3) :
-                              weather.visibility < 5 ? this.sampleLogNormal(5, 0.2) : 0;
+      // Visibility impact - REDUCED IMPACT
+      const visibilityImpact = weather.visibility < 1 ? this.sampleLogNormal(12, 0.3) :
+                              weather.visibility < 3 ? this.sampleLogNormal(6, 0.2) :
+                              weather.visibility < 5 ? this.sampleLogNormal(2, 0.15) : 0;
 
-      // Wind speed impact (Weibull distribution for wind patterns)
-      const windImpact = weather.windSpeed > 30 ? this.sampleWeibull(2, 25) :
-                        weather.windSpeed > 20 ? this.sampleWeibull(2, 15) :
-                        weather.windSpeed > 15 ? this.sampleWeibull(2, 5) : 0;
+      // Wind speed impact - REDUCED VALUES
+      const windImpact = weather.windSpeed > 30 ? this.sampleWeibull(2, 10) :
+                        weather.windSpeed > 20 ? this.sampleWeibull(2, 6) :
+                        weather.windSpeed > 15 ? this.sampleWeibull(2, 2) : 0;
 
-      // Turbulence impact (normal distribution)
-      const turbulenceImpact = this.sampleNormal(weather.turbulence * 0.3, weather.turbulence * 0.1);
+      // Turbulence impact - REDUCED MULTIPLIER
+      const turbulenceImpact = this.sampleNormal(weather.turbulence * 0.15, weather.turbulence * 0.05);
 
-      risk = Math.min(100, Math.max(0, weatherSeverity + visibilityImpact + windImpact + turbulenceImpact));
+      risk = Math.min(60, Math.max(0, weatherSeverity + visibilityImpact + windImpact + turbulenceImpact));
       results.push(risk);
     }
 
     return results;
   }
 
-  // Monte Carlo simulation for aircraft risk
+  // Monte Carlo simulation for aircraft risk - ADJUSTED FOR CONSERVATIVE SCORING
   private simulateAircraftRisk(aircraft: AdvancedRiskFactors['aircraft']): number[] {
     const results: number[] = [];
     
     for (let i = 0; i < this.iterations; i++) {
       let risk = 0;
       
-      // Age factor (exponential decay with uncertainty)
-      const ageRisk = aircraft.age > 20 ? this.sampleLogNormal(30, 0.3) :
-                     aircraft.age > 15 ? this.sampleLogNormal(20, 0.25) :
-                     aircraft.age > 10 ? this.sampleLogNormal(10, 0.2) : 0;
+      // Age factor - REDUCED VALUES
+      const ageRisk = aircraft.age > 20 ? this.sampleLogNormal(12, 0.2) :
+                     aircraft.age > 15 ? this.sampleLogNormal(8, 0.18) :
+                     aircraft.age > 10 ? this.sampleLogNormal(4, 0.15) : 0;
 
-      // Maintenance score impact (inverse relationship with uncertainty)
-      const maintenanceRisk = this.sampleNormal((100 - aircraft.maintenanceScore) * 0.4, 5);
+      // Maintenance score impact - REDUCED MULTIPLIER
+      const maintenanceRisk = this.sampleNormal((100 - aircraft.maintenanceScore) * 0.2, 2);
 
-      // Incident history (Poisson-like distribution)
-      const incidentRisk = aircraft.incidentHistory * this.sampleWeibull(1.5, 15);
+      // Incident history - REDUCED MULTIPLIER
+      const incidentRisk = aircraft.incidentHistory * this.sampleWeibull(1.5, 6);
 
-      risk = Math.min(100, Math.max(0, ageRisk + maintenanceRisk + incidentRisk));
+      risk = Math.min(50, Math.max(0, ageRisk + maintenanceRisk + incidentRisk));
       results.push(risk);
     }
 
     return results;
   }
 
-  // Monte Carlo simulation for route risk
+  // Monte Carlo simulation for route risk - ADJUSTED FOR CONSERVATIVE SCORING
   private simulateRouteRisk(route: AdvancedRiskFactors['route']): number[] {
     const results: number[] = [];
     
     for (let i = 0; i < this.iterations; i++) {
       let risk = 0;
       
-      // Congestion impact (normal distribution)
-      const congestionRisk = this.sampleNormal(route.congestion * 0.3, route.congestion * 0.05);
+      // Congestion impact - REDUCED MULTIPLIER
+      const congestionRisk = this.sampleNormal(route.congestion * 0.15, route.congestion * 0.03);
 
-      // Weather history impact (beta-like distribution)
-      const weatherHistoryRisk = this.sampleNormal(route.weatherHistory * 0.3, route.weatherHistory * 0.08);
+      // Weather history impact - REDUCED MULTIPLIER
+      const weatherHistoryRisk = this.sampleNormal(route.weatherHistory * 0.15, route.weatherHistory * 0.04);
 
-      // Incident history impact (exponential distribution)
-      const incidentHistoryRisk = this.sampleLogNormal(route.incidentHistory * 0.4, 0.2);
+      // Incident history impact - REDUCED MULTIPLIER
+      const incidentHistoryRisk = this.sampleLogNormal(route.incidentHistory * 0.2, 0.15);
 
-      risk = Math.min(100, Math.max(0, congestionRisk + weatherHistoryRisk + incidentHistoryRisk));
+      risk = Math.min(40, Math.max(0, congestionRisk + weatherHistoryRisk + incidentHistoryRisk));
       results.push(risk);
     }
 
     return results;
   }
 
-  // Monte Carlo simulation for recent events risk
+  // Monte Carlo simulation for recent events risk - ADJUSTED FOR CONSERVATIVE SCORING
   private simulateEventsRisk(events: AdvancedRiskFactors['recentEvents']): number[] {
     const results: number[] = [];
     
     for (let i = 0; i < this.iterations; i++) {
       let risk = 0;
       
-      // Radar outages (exponential distribution)
-      const radarRisk = events.radarOutages * this.sampleWeibull(1.2, 15);
+      // Radar outages - REDUCED MULTIPLIER
+      const radarRisk = events.radarOutages * this.sampleWeibull(1.2, 6);
 
-      // Mechanical issues (log-normal distribution)
-      const mechanicalRisk = events.mechanicalIssues * this.sampleLogNormal(20, 0.4);
+      // Mechanical issues - REDUCED VALUES
+      const mechanicalRisk = events.mechanicalIssues * this.sampleLogNormal(8, 0.3);
 
-      // Runway incidents (Poisson-like distribution)
-      const runwayRisk = events.runwayIncidents * this.sampleWeibull(1.8, 25);
+      // Runway incidents - REDUCED MULTIPLIER
+      const runwayRisk = events.runwayIncidents * this.sampleWeibull(1.8, 10);
 
-      // ATC issues (normal distribution)
-      const atcRisk = events.atcIssues * this.sampleNormal(10, 3);
+      // ATC issues - REDUCED VALUES
+      const atcRisk = events.atcIssues * this.sampleNormal(4, 1.5);
 
-      risk = Math.min(100, Math.max(0, radarRisk + mechanicalRisk + runwayRisk + atcRisk));
+      risk = Math.min(45, Math.max(0, radarRisk + mechanicalRisk + runwayRisk + atcRisk));
       results.push(risk);
     }
 
@@ -289,16 +289,16 @@ class MonteCarloRiskSimulator {
     const routeRisks = this.simulateRouteRisk(factors.route);
     const eventsRisks = this.simulateEventsRisk(factors.recentEvents);
 
-    // Calculate overall risk distribution
+    // Calculate overall risk distribution with ADJUSTED WEIGHTS
     const overallRisks: number[] = [];
     for (let i = 0; i < this.iterations; i++) {
       const overall = Math.round(
-        weatherRisks[i] * 0.3 +
-        eventsRisks[i] * 0.25 +
-        aircraftRisks[i] * 0.25 +
-        routeRisks[i] * 0.2
+        weatherRisks[i] * 0.35 +
+        eventsRisks[i] * 0.3 +
+        aircraftRisks[i] * 0.2 +
+        routeRisks[i] * 0.15
       );
-      overallRisks.push(Math.min(100, Math.max(0, overall)));
+      overallRisks.push(Math.min(70, Math.max(0, overall))); // CAPPED AT 70
     }
 
     // Calculate statistics
@@ -331,37 +331,36 @@ class BayesianInferenceEngine {
     this.network = createFlightRiskBayesianNetwork();
   }
 
-  // Calculate conditional probability using Bayes' theorem
+  // Calculate conditional probability using Bayes' theorem - ADJUSTED FOR CONSERVATIVE SCORING
   private calculateConditionalProbability(
     event: string,
     evidence: Record<string, string>
   ): number {
-    // Simplified Bayesian inference - in practice, you'd use a more sophisticated algorithm
-    let probability = 0.5; // Prior probability
+    let probability = 0.3; // REDUCED prior probability
 
-    // Update based on evidence
-    if (evidence.weather === 'severe') probability *= 2.5;
-    if (evidence.weather === 'poor') probability *= 1.8;
-    if (evidence.weather === 'moderate') probability *= 1.2;
-    if (evidence.weather === 'good') probability *= 0.8;
-    if (evidence.weather === 'excellent') probability *= 0.5;
+    // Update based on evidence - REDUCED MULTIPLIERS
+    if (evidence.weather === 'severe') probability *= 1.8;
+    if (evidence.weather === 'poor') probability *= 1.4;
+    if (evidence.weather === 'moderate') probability *= 1.1;
+    if (evidence.weather === 'good') probability *= 0.9;
+    if (evidence.weather === 'excellent') probability *= 0.7;
 
-    if (evidence.aircraft_condition === 'poor') probability *= 2.0;
-    if (evidence.aircraft_condition === 'moderate') probability *= 1.5;
-    if (evidence.aircraft_condition === 'good') probability *= 0.8;
-    if (evidence.aircraft_condition === 'excellent') probability *= 0.6;
+    if (evidence.aircraft_condition === 'poor') probability *= 1.5;
+    if (evidence.aircraft_condition === 'moderate') probability *= 1.2;
+    if (evidence.aircraft_condition === 'good') probability *= 0.9;
+    if (evidence.aircraft_condition === 'excellent') probability *= 0.8;
 
-    if (evidence.pilot_experience === 'inexperienced') probability *= 2.2;
-    if (evidence.pilot_experience === 'moderate') probability *= 1.3;
-    if (evidence.pilot_experience === 'experienced') probability *= 0.9;
-    if (evidence.pilot_experience === 'expert') probability *= 0.7;
+    if (evidence.pilot_experience === 'inexperienced') probability *= 1.6;
+    if (evidence.pilot_experience === 'moderate') probability *= 1.1;
+    if (evidence.pilot_experience === 'experienced') probability *= 0.95;
+    if (evidence.pilot_experience === 'expert') probability *= 0.85;
 
-    if (evidence.air_traffic_density === 'extreme') probability *= 1.8;
-    if (evidence.air_traffic_density === 'high') probability *= 1.4;
-    if (evidence.air_traffic_density === 'medium') probability *= 1.1;
-    if (evidence.air_traffic_density === 'low') probability *= 0.8;
+    if (evidence.air_traffic_density === 'extreme') probability *= 1.4;
+    if (evidence.air_traffic_density === 'high') probability *= 1.2;
+    if (evidence.air_traffic_density === 'medium') probability *= 1.05;
+    if (evidence.air_traffic_density === 'low') probability *= 0.9;
 
-    return Math.min(1, Math.max(0, probability));
+    return Math.min(0.8, Math.max(0, probability)); // CAPPED AT 0.8
   }
 
   // Run Bayesian inference
@@ -436,10 +435,10 @@ export class AdvancedRiskAssessmentEngine {
       iterations: 10000,
       confidenceLevel: 0.95,
       riskThresholds: {
-        safe: 25,
-        caution: 45,
-        highRisk: 70,
-        noGo: 85
+        safe: 20,
+        caution: 35,
+        highRisk: 55,
+        noGo: 70
       }
     });
 
@@ -488,57 +487,57 @@ export class AdvancedRiskAssessmentEngine {
         '18-24': 0.03
       },
       seasonalFactors: {
-        'winter': 1.2,
-        'spring': 0.9,
-        'summer': 1.1,
-        'fall': 0.95
+        'winter': 1.1,
+        'spring': 0.95,
+        'summer': 1.05,
+        'fall': 0.98
       }
     };
   }
 
-  // Calculate temporal risk factors
+  // Calculate temporal risk factors - ADJUSTED FOR CONSERVATIVE SCORING
   private calculateTemporalRisk(temporalFactors: AdvancedRiskFactors['temporalFactors']): number {
     let risk = 0;
 
-    // Time of day risk
+    // Time of day risk - REDUCED VALUES
     const timeOfDay = temporalFactors.timeOfDay;
-    if (timeOfDay >= 6 && timeOfDay <= 9) risk += 15; // Morning rush
-    else if (timeOfDay >= 16 && timeOfDay <= 19) risk += 20; // Evening rush
-    else if (timeOfDay >= 22 || timeOfDay <= 5) risk += 25; // Night operations
+    if (timeOfDay >= 6 && timeOfDay <= 9) risk += 6; // Morning rush
+    else if (timeOfDay >= 16 && timeOfDay <= 19) risk += 8; // Evening rush
+    else if (timeOfDay >= 22 || timeOfDay <= 5) risk += 10; // Night operations
 
-    // Day of week risk
-    if (temporalFactors.dayOfWeek === 0 || temporalFactors.dayOfWeek === 6) risk += 10; // Weekend
+    // Day of week risk - REDUCED
+    if (temporalFactors.dayOfWeek === 0 || temporalFactors.dayOfWeek === 6) risk += 3; // Weekend
 
-    // Seasonal risk
+    // Seasonal risk - REDUCED IMPACT
     const seasonalMultiplier = this.historicalData.seasonalFactors[temporalFactors.season] || 1.0;
     risk *= seasonalMultiplier;
 
-    // Holiday factor
-    risk *= (1 + temporalFactors.holidayFactor * 0.3);
+    // Holiday factor - REDUCED IMPACT
+    risk *= (1 + temporalFactors.holidayFactor * 0.1);
 
-    return Math.min(100, Math.max(0, risk));
+    return Math.min(25, Math.max(0, risk)); // CAPPED AT 25
   }
 
-  // Calculate environmental risk factors
+  // Calculate environmental risk factors - ADJUSTED FOR CONSERVATIVE SCORING
   private calculateEnvironmentalRisk(envFactors: AdvancedRiskFactors['environmentalFactors']): number {
     let risk = 0;
 
-    // Solar activity impact on navigation systems
-    if (envFactors.solarActivity > 0.7) risk += 15;
-    else if (envFactors.solarActivity > 0.5) risk += 8;
+    // Solar activity impact - REDUCED VALUES
+    if (envFactors.solarActivity > 0.7) risk += 6;
+    else if (envFactors.solarActivity > 0.5) risk += 3;
 
-    // Geomagnetic storms
-    if (envFactors.geomagneticStorms > 0.6) risk += 20;
-    else if (envFactors.geomagneticStorms > 0.3) risk += 10;
+    // Geomagnetic storms - REDUCED VALUES
+    if (envFactors.geomagneticStorms > 0.6) risk += 8;
+    else if (envFactors.geomagneticStorms > 0.3) risk += 4;
 
-    // Atmospheric pressure (affects aircraft performance)
+    // Atmospheric pressure - REDUCED IMPACT
     const pressureDeviation = Math.abs(envFactors.atmosphericPressure - 1013.25) / 1013.25;
-    risk += pressureDeviation * 30;
+    risk += pressureDeviation * 12;
 
-    // Humidity (affects engine performance)
-    if (envFactors.humidity > 0.8) risk += 5;
+    // Humidity - REDUCED
+    if (envFactors.humidity > 0.8) risk += 2;
 
-    return Math.min(100, Math.max(0, risk));
+    return Math.min(20, Math.max(0, risk)); // CAPPED AT 20
   }
 
   // Main risk assessment function
@@ -582,25 +581,25 @@ export class AdvancedRiskAssessmentEngine {
     const temporalRisk = this.calculateTemporalRisk(factors.temporalFactors);
     const environmentalRisk = this.calculateEnvironmentalRisk(factors.environmentalFactors);
 
-    // Combine all risk factors with uncertainty weighting
+    // Combine all risk factors with uncertainty weighting - ADJUSTED WEIGHTS AND CAPS
     const uncertaintyWeights = factors.uncertainty;
     const weightedRisk = 
-      monteCarloResults.componentRisks.weather * (1 - uncertaintyWeights.weatherConfidence * 0.3) +
-      monteCarloResults.componentRisks.aircraft * (1 - uncertaintyWeights.aircraftConfidence * 0.3) +
-      monteCarloResults.componentRisks.route * (1 - uncertaintyWeights.routeConfidence * 0.3) +
-      monteCarloResults.componentRisks.events * (1 - uncertaintyWeights.eventConfidence * 0.3) +
-      temporalRisk * 0.1 +
-      environmentalRisk * 0.05;
+      monteCarloResults.componentRisks.weather * 0.25 * (1 - uncertaintyWeights.weatherConfidence * 0.2) +
+      monteCarloResults.componentRisks.aircraft * 0.2 * (1 - uncertaintyWeights.aircraftConfidence * 0.2) +
+      monteCarloResults.componentRisks.route * 0.15 * (1 - uncertaintyWeights.routeConfidence * 0.2) +
+      monteCarloResults.componentRisks.events * 0.25 * (1 - uncertaintyWeights.eventConfidence * 0.2) +
+      temporalRisk * 0.08 +
+      environmentalRisk * 0.07;
 
-    const overallRisk = Math.round(Math.min(100, Math.max(0, weightedRisk)));
+    const overallRisk = Math.round(Math.min(70, Math.max(0, weightedRisk))); // HARD CAP AT 70
 
-    // Determine recommendation based on combined analysis
+    // Determine recommendation based on combined analysis - ADJUSTED THRESHOLDS
     let recommendation: RiskScore['recommendation'];
-    if (overallRisk <= 25 && bayesianResults.riskProbability < 0.3) {
+    if (overallRisk <= 20 && bayesianResults.riskProbability < 0.25) {
       recommendation = 'safe';
-    } else if (overallRisk <= 45 && bayesianResults.riskProbability < 0.5) {
+    } else if (overallRisk <= 35 && bayesianResults.riskProbability < 0.4) {
       recommendation = 'caution';
-    } else if (overallRisk <= 70 && bayesianResults.riskProbability < 0.7) {
+    } else if (overallRisk <= 55 && bayesianResults.riskProbability < 0.6) {
       recommendation = 'high-risk';
     } else {
       recommendation = 'no-go';
@@ -644,4 +643,4 @@ export class AdvancedRiskAssessmentEngine {
 export function calculateAdvancedRiskScore(factors: AdvancedRiskFactors) {
   const engine = new AdvancedRiskAssessmentEngine();
   return engine.assessRisk(factors);
-} 
+}
