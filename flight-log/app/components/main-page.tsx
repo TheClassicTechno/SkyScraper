@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plane, Shield, Clock, MapPin, Star } from "lucide-react"
+import { Search, Plane, Shield, Clock, MapPin, Star, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -39,10 +39,10 @@ const MainPage = () => {
           departureTime: item.departure?.scheduled ? new Date(item.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
           arrivalTime: item.arrival?.scheduled ? new Date(item.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
           date: item.flight_date || 'UNKNOWN',
-          aircraft: item.aircraft?.model || null,  // Might need adjustment if aircraft is null
-          passengers: null,  // Not provided by AviationStack
-          crew: null,        // Not provided by AviationStack
-          riskScore: Math.floor(Math.random() * 100), // Placeholder
+          aircraft: item.aircraft?.model || 'Unknown Aircraft',
+          passengers: Math.floor(Math.random() * 200) + 50, // Mock passenger count
+          crew: Math.floor(Math.random() * 8) + 4, // Mock crew count
+          riskScore: Math.floor(Math.random() * 100), // Mock risk score
           weather: 'Unknown', // You can hook to weather API here
           atcLoad: 'Unknown', // Placeholder or compute based on conditions
           runway: item.arrival?.runway || null,
@@ -52,17 +52,41 @@ const MainPage = () => {
       
     const router = useRouter();
 
+    const [flightNumber, setFlightNumber] = useState("")
+    const [flightData, setFlightData] = useState<Flight[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
     async function getFlightData(flightDatum: string) {
+        if (!flightDatum.trim()) {
+            setError('Please enter a flight number');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setFlightData([]);
+
         try {
-          const flightData = await fetchFlightData(flightDatum);
-          console.log(flightData);
+          const data = await fetchFlightData(flightDatum);
+          console.log('Flight data received:', data);
+          
+          const convertedFlights = convertToFlightFormat(data);
+          setFlightData(convertedFlights);
+          
+          // Store flight data in sessionStorage for the dashboard
+          sessionStorage.setItem('flightData', JSON.stringify(convertedFlights));
+          sessionStorage.setItem('searchedFlightNumber', flightDatum);
+          
+          // Navigate to dashboard with the data
+          router.push('/flight-score');
         } catch (error) {
-          router.push('/error')
+          setError('Failed to fetch flight data. Please try again.');
           console.error("Error:", error instanceof Error ? error.message : String(error));
+        } finally {
+          setLoading(false);
         }
     }
-
-    const [flightNumber, setFlightNumber] = useState("")
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
@@ -171,7 +195,7 @@ const MainPage = () => {
                                     <div className="relative">
                                         <Input
                                             type="text"
-                                            placeholder="e.g., 1234 or AB12"
+                                            placeholder="e.g., DL1102, AA1234"
                                             value={flightNumber}
                                             onChange={(e) =>
                                                 setFlightNumber(
@@ -182,6 +206,7 @@ const MainPage = () => {
                                             }
                                             className="h-10 sm:h-12 pl-3 sm:pl-4 pr-10 sm:pr-12 text-base sm:text-lg"
                                             maxLength={6}
+                                            onKeyPress={(e) => e.key === 'Enter' && getFlightData(flightNumber)}
                                         />
                                         <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
                                             <Plane className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -189,17 +214,34 @@ const MainPage = () => {
                                     </div>
                                 </div>
 
+                                {/* Error Message */}
+                                {error && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <div className="flex items-center gap-2 text-red-800">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span className="text-sm font-medium">{error}</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Search Button */}
-                                <Link href="/flight-score">
-                                    <Button
-                                        onClick={() => getFlightData(flightNumber)}
-                                        disabled={!flightNumber}
-                                        className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
-                                    >
-                                        <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                                        Track Flight
-                                    </Button>
-                                </Link>
+                                <Button
+                                    onClick={() => getFlightData(flightNumber)}
+                                    disabled={!flightNumber || loading}
+                                    className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-1.5 sm:mr-2"></div>
+                                            Searching...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
+                                            Track Flight
+                                        </>
+                                    )}
+                                </Button>
 
                                 {/* Quick Access Button */}
                                 <div className="text-center">
@@ -214,6 +256,43 @@ const MainPage = () => {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Recent Flight Results */}
+                {flightData.length > 0 && (
+                    <Card className="max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto shadow-xl border-0 bg-white/90 backdrop-blur-sm mt-6">
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="text-center mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">Flight Found!</h3>
+                                <p className="text-sm text-gray-600">Click below to view detailed analysis</p>
+                            </div>
+                            <div className="space-y-3">
+                                {flightData.map((flight) => (
+                                    <div key={flight.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="font-semibold text-lg">{flight.id}</div>
+                                                <div className="text-sm text-gray-600">
+                                                    {flight.departure} → {flight.arrival}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {flight.departureTime} - {flight.arrivalTime}
+                                                </div>
+                                            </div>
+                                            <Badge variant="outline" className="text-blue-600">
+                                                Risk: {flight.riskScore}%
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                                <Link href="/flight-score">
+                                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                                        View Full Analysis
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </main>
 
             {/* Footer */}

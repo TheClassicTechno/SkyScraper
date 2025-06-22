@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useReducer, useEffect } from "react"
-import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home } from "lucide-react"
+import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,8 @@ import { bookingReducer } from '@/lib/flight-booking'
 import FlightBookingModal from './flight-booking-modal'
 import Link from "next/link"
 import { FlightRoute } from '@/lib/turbulence-data'
+import { fetchFlightData } from '../api/aviation-request/route'
+import { Input } from "@/components/ui/input"
 
 // Mock flight data
 
@@ -32,7 +34,8 @@ type Flight = {
   gate: string;
 };
 
-const initalFlights: Flight[] = [
+// Fallback mock data for when API is not available
+const fallbackFlights: Flight[] = [
   {
     id: "AA1234",
     departure: "JFK",
@@ -83,6 +86,28 @@ const initalFlights: Flight[] = [
   },
 ]
 
+// Function to convert API data to Flight format
+function convertToFlightFormat(apiData: any): Flight[] {
+  if (!apiData || !apiData.data || apiData.data.length === 0) return [];
+  
+  return apiData.data.map((item: any) => ({
+    id: item.flight?.iata || 'UNKNOWN',
+    departure: item.departure?.iata || 'UNKNOWN',
+    arrival: item.arrival?.iata || 'UNKNOWN',
+    departureTime: item.departure?.scheduled ? new Date(item.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
+    arrivalTime: item.arrival?.scheduled ? new Date(item.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
+    date: item.flight_date || 'UNKNOWN',
+    aircraft: item.aircraft?.model || 'Unknown Aircraft',
+    passengers: Math.floor(Math.random() * 200) + 50, // Mock passenger count
+    crew: Math.floor(Math.random() * 8) + 4, // Mock crew count
+    riskScore: Math.floor(Math.random() * 100), // Mock risk score
+    weather: 'Unknown', // You can hook to weather API here
+    atcLoad: 'Unknown', // Placeholder or compute based on conditions
+    runway: item.arrival?.runway || null,
+    gate: item.arrival?.gate || null,
+  }));
+}
+
 function RiskScoreCircle({ score, size = 120 }: { score: number; size?: number }) {
   const radius = (size - 20) / 2
   const circumference = 2 * Math.PI * radius
@@ -123,7 +148,7 @@ function RiskScoreCircle({ score, size = 120 }: { score: number; size?: number }
   )
 }
 
-function FlightDetailsDialog({ flight }: { flight: (typeof initalFlights)[0] }) {
+function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }) {
   const [bookingState, bookingDispatch] = useReducer(bookingReducer, {
     isOpen: false,
     selectedFlight: null,
@@ -601,9 +626,82 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
 }
 
 export default function AviationDashboard() {
-  const totalFlights = initalFlights.length
-  const highRiskFlights = initalFlights.filter((f) => f.riskScore > 60).length
-  const averageRisk = Math.round(initalFlights.reduce((sum, f) => sum + f.riskScore, 0) / initalFlights.length)
+  const [flights, setFlights] = useState<Flight[]>(fallbackFlights);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Function to fetch flight data
+  const fetchFlights = async (flightNumbers: string[] = ['DL1102', 'AA1234', 'UA5678']) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const flightPromises = flightNumbers.map(async (flightNumber) => {
+        try {
+          const data = await fetchFlightData(flightNumber);
+          return data;
+        } catch (err) {
+          console.warn(`Failed to fetch data for flight ${flightNumber}:`, err);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(flightPromises);
+      const validResults = results.filter(result => result !== null);
+      
+      if (validResults.length > 0) {
+        const allFlights: Flight[] = [];
+        validResults.forEach(result => {
+          const convertedFlights = convertToFlightFormat(result);
+          allFlights.push(...convertedFlights);
+        });
+        
+        setFlights(allFlights);
+        setLastUpdated(new Date());
+      } else {
+        // If no API data available, use fallback data
+        setFlights(fallbackFlights);
+        setError('Using fallback data - API unavailable');
+      }
+    } catch (err) {
+      console.error('Error fetching flight data:', err);
+      setError('Failed to fetch flight data');
+      setFlights(fallbackFlights);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    // Check if there's stored flight data from the main page search
+    const storedFlightData = sessionStorage.getItem('flightData');
+    const searchedFlightNumber = sessionStorage.getItem('searchedFlightNumber');
+    
+    if (storedFlightData) {
+      try {
+        const parsedData = JSON.parse(storedFlightData);
+        setFlights(parsedData);
+        setLastUpdated(new Date());
+        console.log('Using stored flight data:', parsedData);
+        
+        // Clear the stored data after using it
+        sessionStorage.removeItem('flightData');
+        sessionStorage.removeItem('searchedFlightNumber');
+      } catch (err) {
+        console.error('Error parsing stored flight data:', err);
+        fetchFlights();
+      }
+    } else {
+      // If no stored data, fetch default flights
+      fetchFlights();
+    }
+  }, []);
+
+  const totalFlights = flights.length;
+  const highRiskFlights = flights.filter((f) => f.riskScore > 60).length;
+  const averageRisk = flights.length > 0 ? Math.round(flights.reduce((sum, f) => sum + f.riskScore, 0) / flights.length) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
@@ -653,6 +751,54 @@ export default function AviationDashboard() {
             Aviation Safety
             <span className="block text-blue-600">Dashboard</span>
           </h1>
+          
+          {/* Search and Refresh Section */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
+            <div className="flex gap-2 max-w-md mx-auto sm:mx-0">
+              <Input
+                placeholder="Search flight (e.g., DL1102)"
+                className="flex-1"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const target = e.target as HTMLInputElement;
+                    if (target.value.trim()) {
+                      fetchFlights([target.value.trim()]);
+                    }
+                  }
+                }}
+              />
+              <Button 
+                onClick={() => {
+                  const input = document.querySelector('input[placeholder*="Search flight"]') as HTMLInputElement;
+                  if (input?.value.trim()) {
+                    fetchFlights([input.value.trim()]);
+                  }
+                }}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Button>
+            </div>
+            <Button 
+              onClick={() => fetchFlights()} 
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              <Wifi className="h-4 w-4" />
+              {loading ? 'Refreshing...' : 'Refresh Data'}
+            </Button>
+          </div>
+          
+          {error && (
+            <div className="flex justify-center mb-4">
+              <Badge variant="destructive" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                {error}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Three Main Dashboard Sections */}
@@ -696,17 +842,17 @@ export default function AviationDashboard() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Low Risk (0-39%)</span>
-                  <Badge variant="default">{initalFlights.filter((f) => f.riskScore < 40).length} flights</Badge>
+                  <Badge variant="default">{flights.filter((f) => f.riskScore < 40).length} flights</Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Medium Risk (40-59%)</span>
                   <Badge variant="secondary">
-                    {initalFlights.filter((f) => f.riskScore >= 40 && f.riskScore < 60).length} flights
+                    {flights.filter((f) => f.riskScore >= 40 && f.riskScore < 60).length} flights
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">High Risk (60%+)</span>
-                  <Badge variant="destructive">{initalFlights.filter((f) => f.riskScore >= 60).length} flights</Badge>
+                  <Badge variant="destructive">{flights.filter((f) => f.riskScore >= 60).length} flights</Badge>
                 </div>
               </div>
             </CardContent>
@@ -734,7 +880,9 @@ export default function AviationDashboard() {
                 <Badge variant="default">Active</Badge>
               </div>
               <div className="text-center pt-2">
-                <div className="text-xs text-gray-500">Last Update: 2 min ago</div>
+                <div className="text-xs text-gray-500">
+                  Last Update: {lastUpdated.toLocaleTimeString()}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -746,50 +894,59 @@ export default function AviationDashboard() {
             <CardTitle className="text-xl">Active Flights</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="space-y-6">
-              {initalFlights.map((flight) => (
-                <div key={flight.id} className="flex items-center justify-between p-6 border border-gray-100 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all duration-200">
-                  <div className="flex items-center gap-6">
-                    <RiskScoreCircle score={flight.riskScore} size={100} />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading flight data...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {flights.map((flight) => (
+                  <div key={flight.id} className="flex items-center justify-between p-6 border border-gray-100 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all duration-200">
+                    <div className="flex items-center gap-6">
+                      <RiskScoreCircle score={flight.riskScore} size={100} />
 
-                    <div>
-                      <div className="font-semibold text-lg">{flight.id}</div>
-                      <div className="text-base text-gray-600">
-                        {flight.departure} → {flight.arrival}
-                      </div>
-                      <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
-                        <span className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {flight.departureTime}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          {flight.passengers} pax
-                        </span>
+                      <div>
+                        <div className="font-semibold text-lg">{flight.id}</div>
+                        <div className="text-base text-gray-600">
+                          {flight.departure} → {flight.arrival}
+                        </div>
+                        <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
+                          <span className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            {flight.departureTime}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            {flight.passengers} pax
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-4">
-                    {flight.riskScore > 60 && (
-                      <Badge variant="destructive" className="flex items-center gap-2 text-sm px-3 py-1">
-                        <AlertTriangle className="h-4 w-4" />
-                        High Risk
-                      </Badge>
-                    )}
-                    <FlightDetailsDialog flight={flight} />
+                    <div className="flex items-center gap-4">
+                      {flight.riskScore > 60 && (
+                        <Badge variant="destructive" className="flex items-center gap-2 text-sm px-3 py-1">
+                          <AlertTriangle className="h-4 w-4" />
+                          High Risk
+                        </Badge>
+                      )}
+                      <FlightDetailsDialog flight={flight} />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* AI Flight Recommendations */}
-        <AIFlightRecommendationsSection flights={initalFlights} />
+        <AIFlightRecommendationsSection flights={flights} />
 
         {/* AI Chat Agent */}
-        <AIChatAgent flights={initalFlights} />
+        <AIChatAgent flights={flights} />
       </main>
 
       {/* Footer */}
