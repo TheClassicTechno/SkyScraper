@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, X, Volume2, Languages, Loader2 } from 'lucide-react';
+import { Mic, MicOff, X, Volume2, Languages, Loader2, ChevronDown, Check } from 'lucide-react';
 
 export const SpeechTranslator = ({ isOpen, onClose }) => {
   const [isListening, setIsListening] = useState(false);
@@ -10,24 +10,40 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState('');
-  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const recognitionRef = useRef(null);
   const audioRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'fr', name: 'French' },
-    { code: 'de', name: 'German' },
-    { code: 'it', name: 'Italian' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'ru', name: 'Russian' },
-    { code: 'ja', name: 'Japanese' },
-    { code: 'ko', name: 'Korean' },
-    { code: 'zh', name: 'Chinese' },
-    { code: 'ar', name: 'Arabic' },
-    { code: 'hi', name: 'Hindi' }
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+    { code: 'fr', name: 'French', flag: '🇫🇷' },
+    { code: 'de', name: 'German', flag: '🇩🇪' },
+    { code: 'it', name: 'Italian', flag: '🇮🇹' },
+    { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+    { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+    { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+    { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+    { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+    { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+    { code: 'hi', name: 'Hindi', flag: '🇮🇳' }
   ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -62,21 +78,20 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
     }
   }, []);
 
-  const translateText = async (text) => {
+  const translateText = async (text, targetLang = targetLanguage) => {
     if (!text.trim()) return;
-    
+
     setIsTranslating(true);
     setError('');
-    
+
     try {
-      console.log('Translating text:', text, 'to language:', targetLanguage);
-      
-      // Using Google Translate API (you can replace with your preferred translation service)
-      const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLanguage}`);
+      console.log('Translating text:', text, 'to language:', targetLang);
+
+      const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
       const data = await response.json();
-      
+
       console.log('Translation response:', data);
-      
+
       if (data.responseStatus === 200) {
         setTranslatedText(data.responseData.translatedText);
       } else {
@@ -91,12 +106,22 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleLanguageSelect = (languageCode) => {
+    setTargetLanguage(languageCode);
+    setIsDropdownOpen(false);
+    
+    // Re-translate if we have original text, using the new language code
+    if (originalText) {
+      translateText(originalText, languageCode);
+    }
+  };
+
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       setError('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
-    
+
     if (recognitionRef.current && !isListening) {
       setError('');
       setIsListening(true);
@@ -155,7 +180,7 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
-      
+
       if (audioRef.current) {
         audioRef.current.src = audioUrl;
         audioRef.current.play();
@@ -171,6 +196,10 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
     setOriginalText('');
     setTranslatedText('');
     setError('');
+  };
+
+  const getSelectedLanguage = () => {
+    return languages.find(lang => lang.code === targetLanguage);
   };
 
   if (!isOpen) return null;
@@ -192,22 +221,50 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Language Selection */}
+        {/* Browser Support Check */}
+        {!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">Speech recognition not supported in this browser</p>
+          </div>
+        )}
+
+        {/* Custom Language Selection */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Target Language
           </label>
-          <select
-            value={targetLanguage}
-            onChange={(e) => setTargetLanguage(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {languages.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">{getSelectedLanguage()?.flag}</span>
+                <span className="text-gray-800">{getSelectedLanguage()?.name}</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => handleLanguageSelect(lang.code)}
+                    className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{lang.flag}</span>
+                      <span className="text-gray-800">{lang.name}</span>
+                    </div>
+                    {targetLanguage === lang.code && (
+                      <Check className="w-4 h-4 text-blue-600" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Recording Button */}
@@ -215,13 +272,12 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
           <button
             onClick={isListening ? stopListening : startListening}
             disabled={!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)}
-            className={`p-4 rounded-full transition-all duration-200 ${
-              isListening
+            className={`p-4 rounded-full transition-all duration-200 ${isListening
                 ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                 : !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600'
-            } text-white shadow-lg hover:shadow-xl transform hover:scale-105`}
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              } text-white shadow-lg hover:shadow-xl transform hover:scale-105`}
           >
             {isListening ? (
               <MicOff className="w-8 h-8" />
@@ -241,9 +297,6 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
               <Loader2 className="w-4 h-4 animate-spin" />
               <p className="text-gray-600">Translating...</p>
             </div>
-          )}
-          {!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) && (
-            <p className="text-red-600 text-sm">Speech recognition not supported in this browser</p>
           )}
         </div>
 
@@ -284,7 +337,7 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
             )}
             <span>{isSpeaking ? 'Speaking...' : 'Speak'}</span>
           </button>
-          
+
           <button
             onClick={resetTexts}
             className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
@@ -312,3 +365,4 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
   );
 };
 
+export default SpeechTranslator;
