@@ -3,9 +3,7 @@
  * Example: /v1/flights?access_key=YOURKEY&flight_iata=UA2557
  * using AviationStack using axios and NextJSRequest/Response
  */
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
-
 //TODO no flight number as a string yet flightNumber: string
 //Parse Output:
 
@@ -65,11 +63,68 @@ import axios from 'axios';
 //     }
 //   ]
 // }
+
+const mockData = {
+  pagination: {
+    limit: 100,
+    offset: 0,
+    count: 1,
+    total: 1
+  },
+  data: [
+    {
+      flight_date: "2025-06-20",
+      flight_status: "landed",
+      departure: {
+        airport: "Mineta San Jose International Airport",
+        timezone: "America/Los_Angeles",
+        iata: "SJC",
+        icao: "KSJC",
+        terminal: "A",
+        gate: "12",
+        delay: 3,
+        scheduled: "2025-06-20T22:25:00+00:00",
+        estimated: "2025-06-20T22:25:00+00:00",
+        actual: "2025-06-20T22:28:00+00:00",
+        estimated_runway: "2025-06-20T22:28:00+00:00",
+        actual_runway: "2025-06-20T22:28:00+00:00"
+      },
+      arrival: {
+        airport: "Hartsfield-Jackson Atlanta International",
+        timezone: "America/New_York",
+        iata: "ATL",
+        icao: "KATL",
+        terminal: "S",
+        gate: "B27",
+        baggage: "4",
+        scheduled: "2025-06-21T06:03:00+00:00",
+        delay: null,
+        estimated: "2025-06-21T05:36:00+00:00",
+        actual: "2025-06-21T05:38:00+00:00",
+        estimated_runway: "2025-06-21T05:38:00+00:00",
+        actual_runway: "2025-06-21T05:38:00+00:00"
+      },
+      airline: {
+        name: "Delta Air Lines",
+        iata: "DL",
+        icao: "DAL"
+      },
+      flight: {
+        number: "1102",
+        iata: "DL1102",
+        icao: "DAL1102",
+        codeshared: null
+      },
+      aircraft: null,
+      live: null
+    }
+  ]
+} as const;
+
 export async function fetchFlightData(
   flightData: string,
-  onSuccess?: (data: any) => void
 ) {
-  const accessKey = "edf76f86d8cdc89c062d049b94370a78"; // or process.env.AVIATION_STACK_KEY
+  const accessKey = "b779a52c3f09291595a53da6ac2da737"; // or process.env.AVIATION_STACK_KEY
   if (!accessKey) {
     throw new Error("AviationStack API key is missing.");
   }
@@ -82,12 +137,7 @@ export async function fetchFlightData(
 
   try {
     const response = await axios.get(url);
-    console.log(response.data);
-
-    if (onSuccess) {
-      onSuccess(response.data); // ✅ update context or do anything else
-    }
-
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error("Sorry! Not a valid airport or failed request.", error);
