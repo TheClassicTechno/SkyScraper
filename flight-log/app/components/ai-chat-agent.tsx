@@ -186,8 +186,8 @@ How can I assist you today?`,
     <MessageCircle className="h-6 w-6" />
   </Button>
   <Button
-  onClick={() => window.open('http://localhost:5000/', '_blank')}
-  className="h-14 w-14 rounded-full shadow-lg bg-green-600 hover:bg-green-700 transition-all duration-200 hover:scale-105"
+  onClick={() => window.open(' http://127.0.0.1:5000/', '_blank')}
+  className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-green-700 transition-all duration-200 hover:scale-105"
   size="icon"
 >
   <MessageCircle className="h-6 w-6" />
