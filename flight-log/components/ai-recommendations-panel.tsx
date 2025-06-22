@@ -8,6 +8,20 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FlightRoute, TurbulenceData } from '@/lib/turbulence-data';
 import { FlightRecommendation } from '@/lib/ai-flight-recommendations';
+import { AlternativeFlight } from '@/lib/flight-risk-assessment';
+
+// Extended recommendation type that includes flight information
+interface ExtendedFlightRecommendation extends FlightRecommendation {
+  flight: AlternativeFlight;
+  bookingOptions?: string[];
+  availability?: boolean;
+  riskImprovement?: number;
+  priceComparison?: {
+    originalPrice: number;
+    alternativePrice: number;
+    savings: number;
+  };
+}
 
 interface AIRecommendationsPanelProps {
   currentRoute: FlightRoute;
@@ -20,7 +34,7 @@ export default function AIRecommendationsPanel({
   turbulenceData,
   onRouteSelect
 }: AIRecommendationsPanelProps) {
-  const [recommendations, setRecommendations] = useState<FlightRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<ExtendedFlightRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState<'safety' | 'efficiency' | 'comfort' | 'balanced'>('balanced');
   const [selectedAircraft, setSelectedAircraft] = useState('B737');
@@ -71,10 +85,12 @@ export default function AIRecommendationsPanel({
   };
 
   useEffect(() => {
-    if (currentRoute && turbulenceData.length > 0) {
+    // Only generate recommendations when the component first mounts with valid data
+    // Remove automatic generation on priority/aircraft changes to prevent rapid API calls
+    if (currentRoute && turbulenceData.length > 0 && recommendations.length === 0) {
       generateRecommendations();
     }
-  }, [currentRoute, selectedPriority, selectedAircraft]);
+  }, [currentRoute, turbulenceData]); // Removed selectedPriority and selectedAircraft from dependencies
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -191,10 +207,10 @@ export default function AIRecommendationsPanel({
                     </div>
                     <div>
                       <CardTitle className="text-base">
-                        Alternative Route {index + 1}
+                        {recommendation.flight.airline} {recommendation.flight.id}
                       </CardTitle>
                       <CardDescription>
-                        FL{Math.round((recommendation.route.currentPosition?.altitude || 35000) / 1000)} • 
+                        {recommendation.flight.departure} → {recommendation.flight.arrival} • 
                         {recommendation.timePenalty > 0 ? ` +${formatTime(recommendation.timePenalty)}` : ' No delay'}
                       </CardDescription>
                     </div>
@@ -202,9 +218,6 @@ export default function AIRecommendationsPanel({
                   <div className="flex items-center gap-2">
                     <Badge className={getPriorityColor(recommendation.priority)}>
                       {recommendation.priority}
-                    </Badge>
-                    <Badge variant="outline">
-                      {recommendation.confidence}% confidence
                     </Badge>
                   </div>
                 </div>
@@ -259,33 +272,48 @@ export default function AIRecommendationsPanel({
                         <div><strong>Safety:</strong> {recommendation.explanation.safetyImprovement}</div>
                         <div><strong>Efficiency:</strong> {recommendation.explanation.efficiencyImpact}</div>
                         <div><strong>Weather:</strong> {recommendation.explanation.weatherAvoidance}</div>
-                        <div><strong>Confidence:</strong> {recommendation.explanation.confidenceLevel}</div>
                       </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Add to favorites or save
-                        }}
-                      >
-                        Save Route
-                      </Button>
-                      {onRouteSelect && (
-                        <Button 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRouteSelect(recommendation.route);
-                          }}
-                        >
-                          Use This Route
-                        </Button>
-                      )}
+
+                    <div>
+                      <h4 className="font-medium mb-2">Flight Details</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <div className="text-gray-500">Flight Number</div>
+                          <div className="font-medium">{recommendation.flight.id}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Airline</div>
+                          <div className="font-medium">{recommendation.flight.airline}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Departure</div>
+                          <div className="font-medium">{recommendation.flight.departureTime}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Arrival</div>
+                          <div className="font-medium">{recommendation.flight.arrivalTime}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Price</div>
+                          <div className="font-medium">${recommendation.flight.price}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Risk Score</div>
+                          <div className="font-medium">{recommendation.flight.riskScore}/100</div>
+                        </div>
+                      </div>
                     </div>
+
+                    {onRouteSelect && (
+                      <Button 
+                        onClick={() => onRouteSelect(recommendation.route)}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        Use This Route
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>

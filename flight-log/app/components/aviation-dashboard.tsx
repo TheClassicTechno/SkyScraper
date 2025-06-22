@@ -456,7 +456,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
         </CardHeader>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Get safer flight alternatives</span>
+            <span className="text-sm text-gray-600">Get safer alternatives for high-risk flights</span>
             <div className="flex gap-2">
               <Button 
                 size="sm"
@@ -469,16 +469,6 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
                 }}
               >
                 Generate
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="transition-all duration-200"
-                onClick={() => {
-                  generateAIRecommendations(flights[0]);
-                }}
-              >
-                View All
               </Button>
             </div>
           </div>
@@ -494,6 +484,7 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
           <div className="flex items-center gap-2">
             <span className="text-blue-600">🎯</span>
             AI Flight Recommendations
+            <span className="text-sm text-red-600 font-normal">(High-Risk Flights Only)</span>
           </div>
           <Button 
             variant="outline" 
@@ -562,9 +553,6 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
                         <div className="text-sm text-gray-500">{rec.flight.departure} → {rec.flight.arrival}</div>
                       </div>
                     </div>
-                    <Badge variant="outline">
-                      {rec.confidence}% confidence
-                    </Badge>
                   </div>
                   
                   {/* Flight Details Grid */}
@@ -965,8 +953,10 @@ export default function AviationDashboard() {
           </CardContent>
         </Card>
 
-        {/* AI Flight Recommendations */}
-        <AIFlightRecommendationsSection flights={flights} />
+        {/* AI Flight Recommendations - Only show for high-risk flights */}
+        {flights.some(flight => flight.riskScore > 60) && (
+          <AIFlightRecommendationsSection flights={flights} />
+        )}
 
         {/* AI Chat Agent */}
         <AIChatAgent flights={flights} />

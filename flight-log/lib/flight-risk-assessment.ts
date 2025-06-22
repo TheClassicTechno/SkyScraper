@@ -214,9 +214,9 @@ export function findSaferAlternatives(
   departure: string,
   arrival: string,
   date: string,
-  maxRiskScore: number = 40
+  maxRiskScore: number = 70 // Increased from 40 to allow more alternatives
 ): AlternativeFlight[] {
-  // Hardcoded alternatives for the three flights
+  // Enhanced alternatives with layovers and better coverage
   const alternatives: Record<string, AlternativeFlight[]> = {
     'DL1102': [
       {
@@ -243,6 +243,19 @@ export function findSaferAlternatives(
         riskScore: 30, // Good alternative
         delayRate: 8,
         safetyLogs: ['Good maintenance record', 'Standard route'],
+        bookingUrl: 'https://delta.com'
+      },
+      {
+        id: 'DL1105',
+        airline: 'Delta Airlines',
+        departure: 'ATL',
+        arrival: 'MIA',
+        departureTime: '09:00',
+        arrivalTime: '11:15',
+        price: 350,
+        riskScore: 15, // Morning flight, very safe
+        delayRate: 3,
+        safetyLogs: ['Early morning departure', 'Minimal weather impact', 'Fresh crew'],
         bookingUrl: 'https://delta.com'
       }
     ],
@@ -272,6 +285,32 @@ export function findSaferAlternatives(
         delayRate: 15,
         safetyLogs: ['Overnight flight', 'Less congestion'],
         bookingUrl: 'https://aa.com'
+      },
+      {
+        id: 'AA459',
+        airline: 'American Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '07:00',
+        arrivalTime: '10:15',
+        price: 520,
+        riskScore: 45, // Morning flight, better conditions
+        delayRate: 8,
+        safetyLogs: ['Early departure', 'Better weather window', 'Less traffic'],
+        bookingUrl: 'https://aa.com'
+      },
+      {
+        id: 'AA460',
+        airline: 'American Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '11:30',
+        arrivalTime: '14:45',
+        price: 480,
+        riskScore: 50, // Midday flight
+        delayRate: 10,
+        safetyLogs: ['Midday departure', 'Stable conditions'],
+        bookingUrl: 'https://aa.com'
       }
     ],
     'BA001': [
@@ -300,13 +339,66 @@ export function findSaferAlternatives(
         delayRate: 8,
         safetyLogs: ['Premium service', 'Experienced crew'],
         bookingUrl: 'https://ba.com'
+      },
+      {
+        id: 'BA004',
+        airline: 'British Airways',
+        departure: 'LHR',
+        arrival: 'JFK',
+        departureTime: '08:00',
+        arrivalTime: '11:15',
+        price: 780,
+        riskScore: 35, // Early morning, very safe
+        delayRate: 4,
+        safetyLogs: ['Early morning departure', 'Minimal delays', 'Fresh aircraft'],
+        bookingUrl: 'https://ba.com'
       }
     ]
   };
 
+  // Generate dynamic alternatives for any flight number with same origin/destination
+  const dynamicAlternatives: AlternativeFlight[] = [];
+  
+  // Create alternatives with layovers for the same route
+  if (departure && arrival) {
+    const layoverOptions = [
+      { layover: 'ORD', airline: 'United Airlines', prefix: 'UA' },
+      { layover: 'DFW', airline: 'American Airlines', prefix: 'AA' },
+      { layover: 'ATL', airline: 'Delta Airlines', prefix: 'DL' },
+      { layover: 'DEN', airline: 'Southwest Airlines', prefix: 'WN' },
+      { layover: 'CLT', airline: 'American Airlines', prefix: 'AA' }
+    ];
+
+    layoverOptions.forEach((option, index) => {
+      // Skip if layover is the same as origin or destination
+      if (option.layover === departure || option.layover === arrival) return;
+      
+      dynamicAlternatives.push({
+        id: `${option.prefix}${1000 + index}`,
+        airline: option.airline,
+        departure: departure,
+        arrival: arrival,
+        departureTime: `${10 + index}:${index % 2 === 0 ? '00' : '30'}`,
+        arrivalTime: `${13 + index}:${index % 2 === 0 ? '15' : '45'}`,
+        price: 300 + (index * 50),
+        riskScore: 40 + (index * 5), // Varying risk scores
+        transferTime: 45 + (index * 15), // Layover time
+        delayRate: 8 + (index * 2),
+        safetyLogs: [
+          `Layover at ${option.layover}`,
+          'Alternative routing',
+          'Reduced congestion'
+        ],
+        bookingUrl: `https://${option.airline.toLowerCase().replace(' ', '')}.com`
+      });
+    });
+  }
+
   // Return alternatives for the original flight, filtered by max risk score
   const flightAlternatives = alternatives[originalFlight] || [];
-  return flightAlternatives.filter(alt => alt.riskScore <= maxRiskScore);
+  const allAlternatives = [...flightAlternatives, ...dynamicAlternatives];
+  
+  return allAlternatives.filter(alt => alt.riskScore <= maxRiskScore);
 }
 
 export function getFAAAlerts(airports: string[]): FAAMessage[] {

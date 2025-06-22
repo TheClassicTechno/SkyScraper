@@ -8,12 +8,10 @@ export interface FlightRecommendation {
   comfortScore: number;
   timePenalty: number; // minutes
   fuelSavings: number; // percentage
-  confidence: number;
   explanation: {
     safetyImprovement: string;
     efficiencyImpact: string;
     weatherAvoidance: string;
-    confidenceLevel: string;
   };
   priority: 'safety' | 'efficiency' | 'comfort' | 'balanced';
 }
@@ -176,7 +174,6 @@ class AIFlightRecommendationEngine {
     comfortScore: number;
     timePenalty: number;
     fuelSavings: number;
-    confidence: number;
   }> {
     // Safety score based on turbulence avoidance
     const safetyScore = this.calculateSafetyScore(route, turbulenceData, aircraft);
@@ -192,17 +189,13 @@ class AIFlightRecommendationEngine {
     
     // Fuel savings calculation
     const fuelSavings = this.calculateFuelSavings(route, originalRoute, aircraft);
-    
-    // Confidence level based on data quality
-    const confidence = this.calculateConfidence(route, turbulenceData);
 
     return {
       safetyScore,
       efficiencyScore,
       comfortScore,
       timePenalty,
-      fuelSavings,
-      confidence
+      fuelSavings
     };
   }
 
@@ -316,23 +309,6 @@ class AIFlightRecommendationEngine {
     return Math.round(((originalFuel - newFuel) / originalFuel) * 100);
   }
 
-  // Calculate confidence level (0-100)
-  private calculateConfidence(route: FlightRoute, turbulenceData: TurbulenceData[]): number {
-    let confidence = 70; // Base confidence
-    
-    // Increase confidence with more data
-    if (turbulenceData.length > 5) confidence += 10;
-    if (turbulenceData.length > 10) confidence += 10;
-    
-    // Increase confidence with recent data
-    const recentData = turbulenceData.filter(t => 
-      Date.now() - new Date(t.timestamp).getTime() < 3600000 // Last hour
-    );
-    if (recentData.length > 0) confidence += 10;
-    
-    return Math.min(100, confidence);
-  }
-
   // Generate explanation for recommendation
   private generateExplanation(
     route: FlightRoute,
@@ -347,7 +323,6 @@ class AIFlightRecommendationEngine {
       safetyImprovement: `Reduces turbulence exposure by ${riskReduction}%`,
       efficiencyImpact: `Adds ${scores.timePenalty} minutes but saves ${scores.fuelSavings}% fuel`,
       weatherAvoidance: `Avoids ${weatherHazards.join(', ')}`,
-      confidenceLevel: `${scores.confidence}% confidence in recommendation`
     };
   }
 

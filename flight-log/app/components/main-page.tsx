@@ -117,7 +117,6 @@ const MainPage = () => {
 
                     <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
                         Track Your Flight
-                        <span className="block text-blue-600">With Confidence</span>
                     </h1>
 
                     <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-4">
@@ -176,11 +175,6 @@ const MainPage = () => {
                                         </div>
                                     </div>
                                 ))}
-                                <Link href="/flight-score">
-                                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                                        View Full Analysis
-                                    </Button>
-                                </Link>
                             </div>
                         </CardContent>
                     </Card>
