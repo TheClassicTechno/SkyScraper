@@ -3,9 +3,7 @@
  * Example: /v1/flights?access_key=YOURKEY&flight_iata=UA2557
  * using AviationStack using axios and NextJSRequest/Response
  */
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
-
 //TODO no flight number as a string yet flightNumber: string
 //Parse Output:
 
@@ -125,9 +123,8 @@ const mockData = {
 
 export async function fetchFlightData(
   flightData: string,
-  onSuccess?: (data: any) => void
 ) {
-  const accessKey = "edf76f86d8cdc89c062d049b94370a78"; // or process.env.AVIATION_STACK_KEY
+  const accessKey = "b779a52c3f09291595a53da6ac2da737"; // or process.env.AVIATION_STACK_KEY
   if (!accessKey) {
     throw new Error("AviationStack API key is missing.");
   }
@@ -140,12 +137,7 @@ export async function fetchFlightData(
 
   try {
     const response = await axios.get(url);
-    console.log(response.data);
-
-    if (onSuccess) {
-      onSuccess(response.data); // ✅ update context or do anything else
-    }
-
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error("Sorry! Not a valid airport or failed request.", error);
