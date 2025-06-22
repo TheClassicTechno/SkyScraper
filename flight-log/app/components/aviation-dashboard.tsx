@@ -1129,7 +1129,7 @@ export default function AviationDashboard() {
         {/* Flight List */}
         <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Active Flights</CardTitle>
+            <CardTitle className="text-xl">My Flights</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {loading ? (
