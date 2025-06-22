@@ -13,3 +13,39 @@ translate==3.6.1
 # WebSocket support
 python-socketio==5.8.0
 eventlet==0.33.3
+
+
+# Enhanced Flight Communication App Requirements
+
+# Core Flask Dependencies
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+python-socketio==5.8.0
+python-engineio==4.7.1
+
+# AI Translation - Google Gemini (PRIMARY)
+google-generativeai>=0.3.0
+deep-translator==1.11.4
+
+# Fallback Translation Services
+#googletrans==4.0.0rc1
+translate==3.6.1
+requests>=2.28.0
+
+# Speech Recognition
+SpeechRecognition==3.10.0
+pyaudio>=0.2.11
+
+# Additional Dependencies
+python-dotenv>=1.0.0
+asyncio-mqtt>=0.11.0
+
+# Development Dependencies (optional)
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Platform-specific audio dependencies
+# For Linux: python3-pyaudio, portaudio19-dev, pulseaudio
+# For macOS: portaudio (via homebrew)
+# For Windows: pyaudio wheel from https://www.lfd.uci.edu/~gohlke/pythonlibs/
