@@ -233,8 +233,8 @@ export function findSaferAlternatives(
         bookingUrl: 'https://delta.com'
       },
       {
-        id: 'DL1104',
-        airline: 'Delta Airlines',
+        id: 'AA2341',
+        airline: 'American Airlines',
         departure: 'ATL',
         arrival: 'MIA',
         departureTime: '18:15',
@@ -243,11 +243,11 @@ export function findSaferAlternatives(
         riskScore: 30, // Good alternative
         delayRate: 8,
         safetyLogs: ['Good maintenance record', 'Standard route'],
-        bookingUrl: 'https://delta.com'
+        bookingUrl: 'https://aa.com'
       },
       {
-        id: 'DL1105',
-        airline: 'Delta Airlines',
+        id: 'WN892',
+        airline: 'Southwest Airlines',
         departure: 'ATL',
         arrival: 'MIA',
         departureTime: '09:00',
@@ -256,13 +256,26 @@ export function findSaferAlternatives(
         riskScore: 15, // Morning flight, very safe
         delayRate: 3,
         safetyLogs: ['Early morning departure', 'Minimal weather impact', 'Fresh crew'],
-        bookingUrl: 'https://delta.com'
+        bookingUrl: 'https://southwest.com'
+      },
+      {
+        id: 'B61234',
+        airline: 'JetBlue Airways',
+        departure: 'ATL',
+        arrival: 'MIA',
+        departureTime: '12:45',
+        arrivalTime: '15:00',
+        price: 310,
+        riskScore: 25,
+        delayRate: 6,
+        safetyLogs: ['Premium service', 'Comfortable seating'],
+        bookingUrl: 'https://jetblue.com'
       }
     ],
     'AA456': [
       {
-        id: 'AA457',
-        airline: 'American Airlines',
+        id: 'UA1427',
+        airline: 'United Airlines',
         departure: 'JFK',
         arrival: 'LAX',
         departureTime: '14:00',
@@ -271,11 +284,11 @@ export function findSaferAlternatives(
         riskScore: 55, // Slightly better
         delayRate: 12,
         safetyLogs: ['Similar aircraft type', 'Alternative departure time'],
-        bookingUrl: 'https://aa.com'
+        bookingUrl: 'https://united.com'
       },
       {
-        id: 'AA458',
-        airline: 'American Airlines',
+        id: 'DL2341',
+        airline: 'Delta Airlines',
         departure: 'JFK',
         arrival: 'LAX',
         departureTime: '20:30',
@@ -284,10 +297,10 @@ export function findSaferAlternatives(
         riskScore: 60, // Comparable
         delayRate: 15,
         safetyLogs: ['Overnight flight', 'Less congestion'],
-        bookingUrl: 'https://aa.com'
+        bookingUrl: 'https://delta.com'
       },
       {
-        id: 'AA459',
+        id: 'AA892',
         airline: 'American Airlines',
         departure: 'JFK',
         arrival: 'LAX',
@@ -300,8 +313,8 @@ export function findSaferAlternatives(
         bookingUrl: 'https://aa.com'
       },
       {
-        id: 'AA460',
-        airline: 'American Airlines',
+        id: 'WN1567',
+        airline: 'Southwest Airlines',
         departure: 'JFK',
         arrival: 'LAX',
         departureTime: '11:30',
@@ -310,7 +323,72 @@ export function findSaferAlternatives(
         riskScore: 50, // Midday flight
         delayRate: 10,
         safetyLogs: ['Midday departure', 'Stable conditions'],
-        bookingUrl: 'https://aa.com'
+        bookingUrl: 'https://southwest.com'
+      },
+      {
+        id: 'B61234',
+        airline: 'JetBlue Airways',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '16:45',
+        arrivalTime: '20:00',
+        price: 420,
+        riskScore: 58,
+        delayRate: 11,
+        safetyLogs: ['Premium service', 'Experienced crew'],
+        bookingUrl: 'https://jetblue.com'
+      },
+      {
+        id: 'AS789',
+        airline: 'Alaska Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '09:15',
+        arrivalTime: '12:30',
+        price: 390,
+        riskScore: 52,
+        delayRate: 9,
+        safetyLogs: ['West coast specialist', 'Reliable service'],
+        bookingUrl: 'https://alaskaair.com'
+      },
+      {
+        id: 'HA456',
+        airline: 'Hawaiian Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '13:20',
+        arrivalTime: '16:35',
+        price: 410,
+        riskScore: 54,
+        delayRate: 13,
+        safetyLogs: ['Pacific route experience', 'Comfortable aircraft'],
+        bookingUrl: 'https://hawaiianairlines.com'
+      },
+      {
+        id: 'F9123',
+        airline: 'Frontier Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '18:00',
+        arrivalTime: '21:15',
+        price: 320,
+        riskScore: 62,
+        delayRate: 16,
+        safetyLogs: ['Budget option', 'Standard service'],
+        bookingUrl: 'https://flyfrontier.com'
+      },
+      {
+        id: 'NK567',
+        airline: 'Spirit Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '21:45',
+        arrivalTime: '01:00',
+        price: 290,
+        riskScore: 65,
+        delayRate: 18,
+        safetyLogs: ['Late night departure', 'Economy service'],
+        bookingUrl: 'https://spirit.com'
       }
     ],
     'BA001': [
@@ -328,8 +406,8 @@ export function findSaferAlternatives(
         bookingUrl: 'https://ba.com'
       },
       {
-        id: 'BA003',
-        airline: 'British Airways',
+        id: 'VS123',
+        airline: 'Virgin Atlantic',
         departure: 'LHR',
         arrival: 'JFK',
         departureTime: '16:30',
@@ -338,11 +416,11 @@ export function findSaferAlternatives(
         riskScore: 50, // Comparable
         delayRate: 8,
         safetyLogs: ['Premium service', 'Experienced crew'],
-        bookingUrl: 'https://ba.com'
+        bookingUrl: 'https://virginatlantic.com'
       },
       {
-        id: 'BA004',
-        airline: 'British Airways',
+        id: 'AA789',
+        airline: 'American Airlines',
         departure: 'LHR',
         arrival: 'JFK',
         departureTime: '08:00',
@@ -351,7 +429,20 @@ export function findSaferAlternatives(
         riskScore: 35, // Early morning, very safe
         delayRate: 4,
         safetyLogs: ['Early morning departure', 'Minimal delays', 'Fresh aircraft'],
-        bookingUrl: 'https://ba.com'
+        bookingUrl: 'https://aa.com'
+      },
+      {
+        id: 'DL456',
+        airline: 'Delta Airlines',
+        departure: 'LHR',
+        arrival: 'JFK',
+        departureTime: '14:15',
+        arrivalTime: '17:30',
+        price: 890,
+        riskScore: 45,
+        delayRate: 7,
+        safetyLogs: ['Transatlantic specialist', 'Reliable service'],
+        bookingUrl: 'https://delta.com'
       }
     ]
   };

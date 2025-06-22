@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FlightRoute, TurbulenceData } from '@/lib/turbulence-data';
 import { FlightRecommendation } from '@/lib/ai-flight-recommendations';
@@ -91,18 +90,6 @@ export default function AIRecommendationsPanel({
       generateRecommendations();
     }
   }, [currentRoute, turbulenceData]); // Removed selectedPriority and selectedAircraft from dependencies
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getScoreBackground = (score: number) => {
-    if (score >= 80) return 'bg-green-100';
-    if (score >= 60) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -224,40 +211,17 @@ export default function AIRecommendationsPanel({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {/* Score Overview */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getScoreColor(recommendation.safetyScore)}`}>
-                      {Math.round(recommendation.safetyScore)}
-                    </div>
-                    <div className="text-xs text-gray-500">Safety</div>
-                    <Progress value={recommendation.safetyScore} className="mt-1" />
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getScoreColor(recommendation.efficiencyScore)}`}>
-                      {Math.round(recommendation.efficiencyScore)}
-                    </div>
-                    <div className="text-xs text-gray-500">Efficiency</div>
-                    <Progress value={recommendation.efficiencyScore} className="mt-1" />
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getScoreColor(recommendation.comfortScore)}`}>
-                      {Math.round(recommendation.comfortScore)}
-                    </div>
-                    <div className="text-xs text-gray-500">Comfort</div>
-                    <Progress value={recommendation.comfortScore} className="mt-1" />
-                  </div>
-                </div>
-
                 {/* Key Metrics */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className={`p-3 rounded-lg ${getScoreBackground(recommendation.safetyScore)}`}>
-                    <div className="text-sm font-medium">Safety Improvement</div>
-                    <div className="text-lg font-semibold">{recommendation.explanation.safetyImprovement}</div>
-                  </div>
                   <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="text-sm font-medium">Fuel Savings</div>
+                    <div className="text-sm font-medium">Time Impact</div>
                     <div className="text-lg font-semibold text-blue-600">
+                      {recommendation.timePenalty > 0 ? `+${formatTime(recommendation.timePenalty)}` : 'No delay'}
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-sm font-medium">Fuel Savings</div>
+                    <div className="text-lg font-semibold text-green-600">
                       {recommendation.fuelSavings > 0 ? `+${recommendation.fuelSavings}%` : `${recommendation.fuelSavings}%`}
                     </div>
                   </div>
@@ -269,8 +233,6 @@ export default function AIRecommendationsPanel({
                     <div>
                       <h4 className="font-medium mb-2">AI Explanation</h4>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Safety:</strong> {recommendation.explanation.safetyImprovement}</div>
-                        <div><strong>Efficiency:</strong> {recommendation.explanation.efficiencyImpact}</div>
                         <div><strong>Weather:</strong> {recommendation.explanation.weatherAvoidance}</div>
                       </div>
                     </div>
