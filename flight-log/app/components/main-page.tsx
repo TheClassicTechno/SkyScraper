@@ -12,14 +12,6 @@ import { fetchFlightData } from "../api/aviation-request/route"
 
 const MainPage = () => {
     const [flightNumber, setFlightNumber] = useState("")
-    const [selectedAirline, setSelectedAirline] = useState("")
-
-    const handleSearch = () => {
-        if (flightNumber && selectedAirline) {
-            console.log(`Searching for flight: ${selectedAirline}${flightNumber}`)
-            // Add your search logic here
-        }
-    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
@@ -149,7 +141,7 @@ const MainPage = () => {
                                 {/* Search Button */}
                                 <Link href="/flight-score">
                                     <Button
-                                        onClick={() => fetchFlightData(flightNumber)}
+                                        onClick={() => fetchFlightData()}
                                         disabled={!flightNumber}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
                                     >
