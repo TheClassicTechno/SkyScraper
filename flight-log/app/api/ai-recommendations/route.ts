@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
       originalFlightNumber,
       departure,
       arrival,
-      date
+      date,
+      userProfile
     } = body;
 
     if (!route) {
@@ -23,6 +24,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Use user's personal risk tolerance or default to 60
+    const userRiskTolerance = userProfile?.riskTolerance || 60;
+    console.log(`Using user's risk tolerance: ${userRiskTolerance}%`);
 
     // Original flight risk scores mapping
     const originalFlightRiskScores: Record<string, number> = {
@@ -34,13 +39,29 @@ export async function POST(request: NextRequest) {
     // Get the original flight's risk score
     const originalRiskScore = originalFlightRiskScores[originalFlightNumber || ''] || 50;
 
+    // Determine priority based on user preferences and risk tolerance
+    let effectivePriority = priority;
+    if (userProfile) {
+      // If user has very low risk tolerance, prioritize safety
+      if (userRiskTolerance < 40) {
+        effectivePriority = 'safety';
+      }
+      // If user has preferred airlines, prioritize those
+      else if (userProfile.preferredAirlines && userProfile.preferredAirlines.length > 0) {
+        effectivePriority = 'balanced'; // Will filter by preferred airlines later
+      }
+    }
+
+    console.log(`Using priority: ${effectivePriority} (user risk tolerance: ${userRiskTolerance}%)`);
+
     // Get real alternative flights using the existing system
+    // Use user's risk tolerance as the maximum acceptable risk for alternatives
     const alternativeFlights: AlternativeFlight[] = findSaferAlternatives(
       originalFlightNumber || 'UNKNOWN',
       departure || route.origin.name,
       arrival || route.destination.name,
       date || new Date().toISOString().split('T')[0],
-      70 // Increased max risk score for alternatives to allow more options
+      userRiskTolerance // Use user's personal risk tolerance
     );
 
     console.log(`Found ${alternativeFlights.length} alternative flights for ${originalFlightNumber || 'UNKNOWN'} (Original risk: ${originalRiskScore}%)`);
@@ -103,7 +124,7 @@ export async function POST(request: NextRequest) {
           alternativeRoute,
           [], // Empty turbulence data - simplified approach
           aircraftType,
-          priority
+          effectivePriority
         );
 
         // Get the first (best) recommendation
@@ -133,7 +154,7 @@ export async function POST(request: NextRequest) {
           timePenalty: bestRecommendation.timePenalty,
           fuelSavings: bestRecommendation.fuelSavings,
           explanation: bestRecommendation.explanation,
-          priority: priority,
+          priority: effectivePriority,
           bookingOptions: bookingOptions.slice(0, 3), // Top 3 booking providers
           availability: await bookingService.checkAvailability(flight),
           riskImprovement: riskImprovement,
@@ -148,15 +169,15 @@ export async function POST(request: NextRequest) {
 
     // Sort recommendations by priority
     const sortedRecommendations = recommendations.sort((a, b) => {
-      if (priority === 'safety') {
+      if (effectivePriority === 'safety') {
         // Sort by fuel savings (higher is better) and time penalty (lower is better)
         const aScore = a.fuelSavings - (a.timePenalty * 0.1);
         const bScore = b.fuelSavings - (b.timePenalty * 0.1);
         return bScore - aScore;
-      } else if (priority === 'efficiency') {
+      } else if (effectivePriority === 'efficiency') {
         // Sort by fuel savings (higher is better)
         return b.fuelSavings - a.fuelSavings;
-      } else if (priority === 'comfort') {
+      } else if (effectivePriority === 'comfort') {
         // Sort by time penalty (lower is better)
         return a.timePenalty - b.timePenalty;
       } else {
@@ -179,7 +200,7 @@ export async function POST(request: NextRequest) {
           date
         },
         aircraftType,
-        priority,
+        priority: effectivePriority,
         analysisTimestamp: new Date().toISOString()
       },
       originalRoute: route

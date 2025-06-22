@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useReducer, useEffect } from "react"
-import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home, Search, ExternalLink, Languages } from "lucide-react"
+import { AlertTriangle, Calendar, Clock, MapPin, Plane, Users, Wifi, Home, Search, ExternalLink, User, Settings, Languages } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -16,6 +16,8 @@ import { fetchFlightData } from '@/lib/aviation-apis'
 import { Input } from "@/components/ui/input"
 import { FlightBookingService, bookingProviders } from '@/lib/flight-booking'
 import { VapidAgent } from "./vapid-chat-agent"
+import { LettaMemoryDashboard } from "./letta-memory-dashboard"
+import { LettaProfileSettings } from "./letta-profile-settings"
 import { SpeechTranslator } from "./ai-translate"
 
 
@@ -444,7 +446,7 @@ function MedicalEmergencyDialog({ flight }: { flight: Flight }) {
 }
 
 // AI Flight Recommendations Section Component
-function AIFlightRecommendationsSection({ flights }: {
+function AIFlightRecommendationsSection({ flights, userProfile }: {
   flights: Array<{
     id: string;
     departure: string;
@@ -460,7 +462,8 @@ function AIFlightRecommendationsSection({ flights }: {
     atcLoad: string;
     runway: string;
     gate: string;
-  }>
+  }>,
+  userProfile: any
 }) {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
@@ -516,7 +519,8 @@ function AIFlightRecommendationsSection({ flights }: {
           originalFlightNumber: targetFlight.id,
           departure: targetFlight.departure,
           arrival: targetFlight.arrival,
-          date: targetFlight.date
+          date: targetFlight.date,
+          userProfile: userProfile
         })
       });
 
@@ -548,7 +552,8 @@ function AIFlightRecommendationsSection({ flights }: {
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
                 onClick={() => {
-                  const highRiskFlight = flights.find((f: any) => f.riskScore > 60);
+                  const riskThreshold = userProfile?.riskTolerance || 60;
+                  const highRiskFlight = flights.find((f: any) => f.riskScore > riskThreshold);
                   if (highRiskFlight) {
                     generateAIRecommendations(highRiskFlight);
                   }
@@ -902,7 +907,35 @@ export default function AviationDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [profileUpdated, setProfileUpdated] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [showSpeechTranslator, setShowSpeechTranslator] = useState(false);
+
+  // Function to handle profile updates
+  const handleProfileUpdate = (profile: any) => {
+    console.log('Profile updated:', profile);
+    setProfileUpdated(true);
+    setProfileDialogOpen(false); // Close dialog after update
+    setUserProfile(profile); // Update local state
+    // You can add additional logic here when profile is updated
+  };
+
+  // Load user profile on component mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const response = await fetch('/api/letta-context?userId=demo-user');
+        const data = await response.json();
+        if (data.success && data.userProfile) {
+          setUserProfile(data.userProfile);
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      }
+    };
+    loadUserProfile();
+  }, []);
 
   // Function to fetch flight data - removed default flight numbers
   const fetchFlights = async (flightNumbers: string[]) => {
@@ -1003,6 +1036,37 @@ export default function AviationDashboard() {
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
                 Live Data
               </Badge>
+              
+              {/* Profile Button */}
+              <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 transition-all duration-200"
+                  >
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                      <User className="h-3 w-3 text-white" />
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium text-gray-700">Customize Profile</span>
+                    <Settings className="h-3 w-3 text-gray-500" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Customize Your Profile
+                    </DialogTitle>
+                    <DialogDescription>
+                      Configure your personal preferences and risk tolerance for personalized flight recommendations.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <LettaProfileSettings userId="demo-user" onProfileUpdate={handleProfileUpdate} />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -1183,10 +1247,10 @@ export default function AviationDashboard() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      {flight.riskScore > 60 && (
+                      {userProfile && userProfile.riskTolerance && flight.riskScore > userProfile.riskTolerance && (
                         <Badge variant="destructive" className="flex items-center gap-2 text-sm px-3 py-1">
                           <AlertTriangle className="h-4 w-4" />
-                          High Risk
+                          High Risk (Your threshold: {userProfile.riskTolerance}%)
                         </Badge>
                       )}
                       <div className="flex flex-col gap-2">
@@ -1203,14 +1267,14 @@ export default function AviationDashboard() {
           </CardContent>
         </Card>
 
-        {/* AI Flight Recommendations - Only show for high-risk flights */}
-        {flights.some(flight => flight.riskScore > 60) && (
-          <AIFlightRecommendationsSection flights={flights} />
+        {/* AI Flight Recommendations - Only show for flights above user's risk threshold */}
+        {userProfile && userProfile.riskTolerance && flights.some(flight => flight.riskScore > userProfile.riskTolerance) && (
+          <AIFlightRecommendationsSection flights={flights} userProfile={userProfile} />
         )}
 
         {/* AI Chat Agent */}
         <div className="fixed bottom-6 right-6 z-50 flex gap-4">
-          <AIChatAgent flights={flights} />
+          <AIChatAgent flights={flights} userProfile={userProfile} />
           {/* Speech Translator Button */}
           <button
             onClick={() => setShowSpeechTranslator(true)}
