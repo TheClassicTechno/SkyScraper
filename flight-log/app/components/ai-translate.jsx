@@ -176,8 +176,8 @@ export const SpeechTranslator = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
