@@ -36,6 +36,7 @@ export default function Home() {
           {/* Error Icon */}
           <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
             <AlertCircle className="h-10 w-10 text-orange-600" />
+            
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">Flight Not Found</h1>

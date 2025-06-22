@@ -176,24 +176,26 @@ How can I assist you today?`,
 
   return (
     <>
-      {/* Floating Chat Button */}
-      <div className="fixed bottom-6 right-5 z-50">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
-          size="icon"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-        {flights.filter((f) => f.riskScore > 60).length > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs animate-pulse"
-          >
-            {flights.filter((f) => f.riskScore > 60).length}
-          </Badge>
-        )}
-      </div>
+      <>
+  {/* Floating Chat Buttons Side by Side */}
+  <div className="fixed bottom-6 right-6 z-50 flex gap-4">
+    <Button
+      onClick={() => setIsOpen(true)}
+      className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+      size="icon"
+    >
+      <MessageCircle className="h-6 w-6" />
+    </Button>
+    <Button
+      onClick={() => alert('Second assistant clicked!')}
+      className="h-14 w-14 rounded-full shadow-lg bg-green-600 hover:bg-green-700 transition-all duration-200 hover:scale-105"
+      size="icon"
+    >
+      <MessageCircle className="h-6 w-6" />
+    </Button>
+  </div>
+  {/* ...rest of your dialog code... */}
+</>
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

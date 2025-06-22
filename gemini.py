@@ -137,8 +137,6 @@ class GeminiTranslator:
         """Initialize Gemini AI model"""
         try:
             # Get API key from environment variable
-            #api_key = os.getenv('AIzaSyBabZps8wcWFhyOrWEai4mcPyKzaNvGIoA')
-            #AIzaSyDawieEIRKCDVVK9v-KvGa-13PRe4tXgyA
             api_key = os.getenv('GEMINI_API_KEY')
             if not api_key:
                 print("Warning: GEMINI_API_KEY not set in environment variables")
@@ -231,8 +229,6 @@ class GeminiTranslator:
             print(f"Gemini language detection error: {e}")
             return 'unknown'
     
-    # Replace your translation priority in the translate_text method
-
     def translate_text(self, text: str, target_lang: str = 'en', source_lang: str = 'auto', context: str = 'general') -> Dict[str, Any]:
         """Translation with Google Translate as primary method"""
         if not text or not text.strip():
@@ -282,7 +278,7 @@ class GeminiTranslator:
                     print(f"DEBUG: Gemini success: {result['translated_text']}")
                     return result
             except Exception as e:
-                # 2. Handle the 429 Error Gracefully
+                # Handle the 429 Error Gracefully
                 if "429" in str(e):
                     print("Gemini API quota exceeded. Falling back to basic translation.")
                     # Fallback to basic translation
@@ -347,9 +343,9 @@ class GeminiTranslator:
             # Much simpler prompt - Gemini was getting confused with complex instructions
             prompt = f"""Translate this {source_name} text to {target_name}:
 
-    "{text}"
+"{text}"
 
-    Only return the translation, nothing else."""
+Only return the translation, nothing else."""
             
             print(f"DEBUG: Simple Gemini prompt: {prompt}")
             
@@ -494,17 +490,23 @@ class EnhancedAudioProcessor:
             # Primary: Google Speech Recognition
             try:
                 text = recognizer.recognize_google(audio)
-            except (sr.UnknownValueError, sr.RequestError):
+                print(f"DEBUG: Recognized speech: '{text}'")
+            except (sr.UnknownValueError, sr.RequestError) as e:
+                print(f"DEBUG: Primary recognition failed: {e}")
                 pass
             
             # Fallback: Try with language hint if we have context
             if not text and self.target_language != 'en':
                 try:
                     text = recognizer.recognize_google(audio, language=self.target_language)
-                except (sr.UnknownValueError, sr.RequestError):
+                    print(f"DEBUG: Recognized speech with language hint: '{text}'")
+                except (sr.UnknownValueError, sr.RequestError) as e:
+                    print(f"DEBUG: Fallback recognition failed: {e}")
                     pass
             
             if text and len(text.strip()) > 0:
+                print(f"DEBUG: Processing recognized text: '{text}'")
+                
                 # Enhanced translation with context
                 translation_result = self.translator.translate_text(
                     text, 
@@ -525,15 +527,24 @@ class EnhancedAudioProcessor:
                     'context': self.context
                 }
                 
-                socketio.emit('speech_result', result)
+                print(f"DEBUG: Emitting result: {result}")
+                
+                # FIXED: Emit with correct event names that frontend expects
+                socketio.emit('speech_recognized', result)  # For displaying recognized speech
+                socketio.emit('translation_result', result)  # For displaying translation
+                
+            else:
+                print("DEBUG: No text recognized from audio")
                 
         except sr.UnknownValueError:
             # No speech detected - this is normal, don't emit error
+            print("DEBUG: No speech detected in audio")
             pass
         except sr.RequestError as e:
+            print(f"DEBUG: Speech recognition service error: {e}")
             socketio.emit('error', {'message': f'Speech recognition service error: {str(e)}'})
         except Exception as e:
-            print(f"Audio processing error: {e}")
+            print(f"DEBUG: Audio processing error: {e}")
             socketio.emit('error', {'message': f'Audio processing error: {str(e)}'})
 
 # Initialize enhanced components
@@ -666,33 +677,3 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"Error starting server: {e}")
         print("Try running with: python app.py")
-# if __name__ == '__main__':
-#     # Set up logging
-#     logging.basicConfig(level=logging.INFO)
-    
-#     # Print enhanced system status
-#     print("\n" + "="*60)
-#     print("🚀 ENHANCED Flight Communication App Starting...")
-#     print("="*60)
-#     print(f"🎤 Speech Recognition: {'✅ Available' if USE_SPEECH else '❌ Not Available'}")
-#     print(f"🤖 Gemini AI: {'✅ Available' if USE_GEMINI and translator.is_initialized else '❌ Not Available'}")
-#     print(f"🌐 Google Translate: {'✅ Available' if USE_GOOGLE_TRANS else '❌ Not Available'}")
-#     print(f"📝 Basic Translate: {'✅ Available' if USE_TRANSLATE_LIB else '❌ Not Available'}")
-#     print(f"🌍 Languages Supported: {len(LANGUAGES)}")
-#     print("="*60)
-    
-#     if USE_GEMINI and not translator.is_initialized:
-#         print("⚠️  To enable Gemini AI translation:")
-#         print("   1. Get API key from: https://makersuite.google.com/app/apikey")
-#         print("   2. Set environment variable: export GEMINI_API_KEY='your-key-here'")
-#         print("   3. Install: pip install google-generativeai")
-#         print("="*60)
-    
-#     # Run the enhanced app
-#     try:
-#         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-#     except KeyboardInterrupt:
-#         print("\n🛑 Shutting down enhanced system...")
-#     except Exception as e:
-#         print(f"❌ Error starting enhanced server: {e}")
-#         print("💡 Try running with: python enhanced_app.py")
