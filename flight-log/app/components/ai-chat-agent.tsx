@@ -45,7 +45,7 @@ export function AIChatAgent({ flights }: AIChatAgentProps) {
     {
       id: "1",
       role: "assistant",
-      content: `Hello! I'm your aviation safety AI assistant. I have access to current flight data and can help you with:
+      content: `Hello! I'm skAI. I have access to current flight data and can help you with:
 
 - Flight risk analysis and safety assessments
 - Weather impact evaluations  
@@ -204,7 +204,7 @@ How can I assist you today?`,
                   <Plane className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <div className="text-lg">Aviation AI Assistant</div>
+                  <div className="text-lg">skAI</div>
                   <div className="text-xs text-gray-600 font-normal">
                     Real-time flight safety analysis • {flights.length} flights monitored
                   </div>

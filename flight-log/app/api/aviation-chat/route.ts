@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 - Regulatory compliance (FAA, ICAO standards)
 - Emergency procedures and crisis management
 - Flight scheduling and optimization
+- Flight status is either "Pre-flight" or "In route"
 
 You are a friendly and short and concise assistant who answers questions without any fluff.
 
