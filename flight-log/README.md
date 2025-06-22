@@ -1,4 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flight Log - Aviation Safety Dashboard
+
+A comprehensive aviation safety dashboard with AI-powered flight tracking, weather analysis, and intelligent phone assistance.
+
+## Features
+
+- **Real-time Flight Tracking**: Monitor flights with live position data
+- **Weather Analysis**: Get detailed weather conditions and turbulence reports
+- **AI Flight Recommendations**: Intelligent route optimization and safety assessments
+- **VapidAgent**: AI-powered phone assistant for calls, texts, and conversation summaries
+- **Traffic Controller Safety**: All features designed with aviation safety as the top priority
 
 ## Getting Started
 
@@ -16,18 +26,44 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API Keys (Optional)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app works completely without API keys, but you can enhance functionality by adding them to a `.env.local` file:
+
+```env
+# Vapi AI - AI-powered calling and messaging
+# Get your key at: https://vapi.ai (100 free minutes/month)
+NEXT_PUBLIC_VAPI_API_KEY=your_vapi_api_key_here
+
+# OpenWeatherMap - Enhanced weather data
+# Get your key at: https://openweathermap.org/api (1000 free calls/day)
+NEXT_PUBLIC_OPENWEATHER_API_KEY=your_openweather_api_key_here
+
+# FlightLabs - Comprehensive flight data
+# Get your key at: https://www.goflightlabs.com/ (100 free requests/month)
+FLIGHTLABS_API_KEY=your_flightlabs_api_key_here
+```
+
+### VapidAgent Setup
+
+The VapidAgent provides AI-powered phone assistance:
+
+1. **Get a Vapi API Key**: Sign up at [vapi.ai](https://vapi.ai) for 100 free minutes/month
+2. **Add to Environment**: Add `NEXT_PUBLIC_VAPI_API_KEY=your_key` to `.env.local`
+3. **Restart Server**: Restart your development server
+4. **Test**: Click the green phone icon to open VapidAgent
+
+**Safety Features**:
+- All operations prioritize user safety (traffic controller mindset)
+- Phone number validation before calls
+- Graceful error handling and fallbacks
+- Rate limiting to respect API limits
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [API Setup Guide](./API_SETUP.md) - Detailed API configuration instructions
+- [AI Demo Guide](./AI_DEMO.md) - Learn about AI flight recommendations
+- [Next.js Documentation](https://nextjs.org/docs) - Next.js features and API
 
 ## Deploy on Vercel
 

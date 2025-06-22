@@ -4,13 +4,113 @@ This application integrates with free aviation APIs to provide accurate flight t
 
 ## Required API Keys (Optional)
 
-Create a `.env.local` file in the `flight-log` directory with the following API key (optional):
+Create a `.env.local` file in the `flight-log` directory with the following API keys (all optional):
 
 ```env
+# Vapi AI - AI-powered calling and messaging
+# Get your key at: https://vapi.ai
+NEXT_PUBLIC_VAPI_API_KEY=your_vapi_api_key_here
+
 # OpenWeatherMap API (free tier available)
 # Get your key at: https://openweathermap.org/api
 NEXT_PUBLIC_OPENWEATHER_API_KEY=your_openweather_api_key_here
+
+# FlightLabs API (free tier available)
+# Get your key at: https://www.goflightlabs.com/
+FLIGHTLABS_API_KEY=your_flightlabs_api_key_here
 ```
+
+# Vapi AI Setup Guide
+
+## Getting Started with Vapi AI
+
+Your flight tracking app now includes **VapidAgent** - an AI-powered phone assistant that can make calls, send texts, and summarize conversations.
+
+### 1. Get Your Free Vapi API Key
+
+1. Visit [Vapi.ai](https://vapi.ai)
+2. Sign up for a free account
+3. Get your API key from the dashboard
+4. Free tier includes: **100 minutes of calls per month**
+
+### 2. Configure Your Environment
+
+Add to your `.env.local` file:
+
+```bash
+# Vapi AI Configuration
+NEXT_PUBLIC_VAPI_API_KEY=your_vapi_api_key_here
+```
+
+### 3. Features Available
+
+✅ **AI-Powered Phone Calls**
+- Natural language call initiation
+- Intelligent conversation handling
+- Call summaries and transcripts
+- Multi-language support
+
+✅ **Smart Text Messaging**
+- AI-generated responses
+- Context-aware conversations
+- Message history tracking
+- Automated follow-ups
+
+✅ **Call Management**
+- Call history and analytics
+- Conversation summaries
+- Voice-to-text transcription
+- Integration with flight data
+
+### 4. Testing Your Setup
+
+1. Add your Vapi API key to `.env.local`
+2. Restart your development server
+3. Open the VapidAgent chat (green phone icon)
+4. Try commands like:
+   - "Call +1234567890 to check flight status"
+   - "Send a text to +1234567890 about weather conditions"
+   - "Summarize my last call"
+
+### 5. Safety Features
+
+- **Traffic Controller Mindset**: All operations prioritize user safety
+- **Call Validation**: Phone numbers are validated before calls
+- **Error Handling**: Graceful fallbacks when API is unavailable
+- **Rate Limiting**: Respects Vapi's usage limits
+
+### 6. Free Tier Limitations
+
+- **100 minutes of calls per month**
+- Basic AI assistant features
+- Standard voice quality
+- Rate limiting applies
+
+### 7. Upgrading (Optional)
+
+For production use, consider upgrading to paid plans:
+- **Starter**: $10/month - 1,000 minutes
+- **Professional**: $50/month - 5,000 minutes
+- **Enterprise**: Custom pricing
+
+### 8. Integration with Flight Data
+
+VapidAgent can:
+- Call airlines for flight status updates
+- Send weather alerts to pilots
+- Summarize flight-related conversations
+- Schedule follow-up calls for delays
+
+## Current Status
+
+Your VapidAgent is now configured with:
+- ✅ Real Vapi AI integration
+- ✅ Safety-first design principles
+- ✅ Graceful API key handling
+- ✅ Comprehensive error messages
+- ✅ User-friendly setup instructions
+
+The VapidAgent will work in demo mode without an API key, and when you add your Vapi API key, it will provide real AI calling and messaging capabilities!
 
 ## Free APIs (No Key Required)
 
