@@ -1,72 +1,58 @@
-# Flight Log - Aviation Safety Dashboard
+# ✈️ SkyScraper: Enhanced Flight Communication System
 
-A comprehensive aviation safety dashboard with AI-powered flight tracking, weather analysis, and intelligent phone assistance.
+**by berk ai hack team**
+
+---
+
+## Overview
+
+SkyScraper is a real-time speech and text translation system designed for aviation communication. Powered by Google Gemini AI and Google Translate, it provides context-aware, accurate translations for pilots, crew, and travelers, supporting both manual and voice input. The system is built with a modern React/Next.js frontend and a robust Flask/Python backend, communicating via REST API and Socket.IO for real-time features.
+
+---
 
 ## Features
 
-- **Real-time Flight Tracking**: Monitor flights with live position data
-- **Weather Analysis**: Get detailed weather conditions and turbulence reports
-- **AI Flight Recommendations**: Intelligent route optimization and safety assessments
-- **VapidAgent**: AI-powered phone assistant for calls, texts, and conversation summaries
-- **Traffic Controller Safety**: All features designed with aviation safety as the top priority
+- **AI-Powered Translation**
+  - **Google Gemini AI**: Context-aware translations with up to 95% accuracy.
+  - **Aviation Context**: Specialized terminology for flight, ATC, and emergency communication.
+  - **Multi-level Fallback**: Google Translate → Gemini AI → Error handling.
 
-## Getting Started
+- **Speech Recognition**
+  - Real-time voice-to-text using Google Speech Recognition.
+  - Adjustable sensitivity for noisy environments (e.g., cockpits).
 
-First, run the development server:
+- **Manual Text Translation**
+  - Translate typed text between 15+ languages.
+  - Language auto-detection and confidence scoring.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **User Interface**
+  - Modern React/Next.js frontend.
+  - Floating language assistant popup for instant access.
+  - Responsive design for desktop and tablet.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Backend**
+  - Flask API for translation, language/context info, and status.
+  - Socket.IO for real-time speech events.
+  - CORS enabled for seamless frontend-backend integration.
 
-## API Keys (Optional)
+---
 
-The app works completely without API keys, but you can enhance functionality by adding them to a `.env.local` file:
+## Supported Languages
 
-```env
-# Vapi AI - AI-powered calling and messaging
-# Get your key at: https://vapi.ai (100 free minutes/month)
-NEXT_PUBLIC_VAPI_API_KEY=your_vapi_api_key_here
+- English, Spanish, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Thai, Vietnamese, Dutch, and more.
 
-# OpenWeatherMap - Enhanced weather data
-# Get your key at: https://openweathermap.org/api (1000 free calls/day)
-NEXT_PUBLIC_OPENWEATHER_API_KEY=your_openweather_api_key_here
+---
 
-# FlightLabs - Comprehensive flight data
-# Get your key at: https://www.goflightlabs.com/ (100 free requests/month)
-FLIGHTLABS_API_KEY=your_flightlabs_api_key_here
-```
+## Aviation Contexts
 
-### VapidAgent Setup
+- General, ATC (Air Traffic Control), Pilot, Ground, Emergency, Weather, Navigation, etc.
 
-The VapidAgent provides AI-powered phone assistance:
+---
 
-1. **Get a Vapi API Key**: Sign up at [vapi.ai](https://vapi.ai) for 100 free minutes/month
-2. **Add to Environment**: Add `NEXT_PUBLIC_VAPI_API_KEY=your_key` to `.env.local`
-3. **Restart Server**: Restart your development server
-4. **Test**: Click the green phone icon to open VapidAgent
+## Quick Start
 
-**Safety Features**:
-- All operations prioritize user safety (traffic controller mindset)
-- Phone number validation before calls
-- Graceful error handling and fallbacks
-- Rate limiting to respect API limits
+### 1. Clone the Repository
 
-## Learn More
-
-- [API Setup Guide](./API_SETUP.md) - Detailed API configuration instructions
-- [AI Demo Guide](./AI_DEMO.md) - Learn about AI flight recommendations
-- [Next.js Documentation](https://nextjs.org/docs) - Next.js features and API
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```sh
+git clone https://github.com/yourusername/skyscraper.git
+cd skyscraper
