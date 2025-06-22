@@ -4,7 +4,7 @@
  * code for the AI chat agent, should be able to call, text
  */
 import React, { useState, useRef, useEffect } from "react"
-import { MessageCircle, Send, X, Plane } from "lucide-react"
+import { MessageCircle, Send, X, Plane, Languages } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -181,25 +181,45 @@ How can I assist you today?`,
 
   return (
     <>
-      {/* Floating Chat Buttons Side by Side */}
-      <div className="fixed bottom-6 right-6 z-50 flex gap-2">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
-          size="icon"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+        {/* AI Chatbot */}
+        <div className="flex items-center gap-3">
+          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+            <span className="text-sm font-medium text-gray-800">Talk to AI Chatbot</span>
+          </div>
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+            size="icon"
+            aria-label="Talk to AI Chatbot"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </div>
 
-        <Button
-        onClick={() => setShowTranslator(true)}
-        className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105"
-        size="icon"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
+        {/* Speech to Text */}
+        <div className="flex items-center gap-3">
+          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+            <span className="text-sm font-medium text-gray-800">Real Time Speech to Text Translation</span>
+          </div>
+          <Button
+            onClick={() => setShowTranslator(true)}
+            className="h-14 w-14 rounded-full shadow-lg bg-purple-600 hover:bg-purple-700 transition-all duration-200 hover:scale-105"
+            size="icon"
+            aria-label="Real Time Speech to Text Translation"
+          >
+            <Languages className="h-6 w-6" />
+          </Button>
+        </div>
 
-        <VapidAgent />
+        {/* VAPID Call Button */}
+        <div className="flex items-center gap-3">
+          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+            <span className="text-sm font-medium text-gray-800">Call AI Support</span>
+          </div>
+          <VapidAgent />
+        </div>
       </div>
 
       {/* Chat Dialog */}

@@ -128,7 +128,7 @@ function convertToFlightFormat(apiData: any): Flight[] {
         atcLoad: 'Moderate',
         runway: '16R',
         gate: 'B8',
-        flight_status: 'Pre-flight',
+        flight_status: 'In route',
         countdownMinutes: 0
       },
       'BA001': {
@@ -385,15 +385,14 @@ function MedicalEmergencyDialog({ flight }: { flight: Flight }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="flex items-center gap-2">
-          🚨 Medical Emergency
+        <Button variant="outline" size="sm" className="flex items-center gap-2 bg-green-50 hover:bg-green-100 border-green-300 text-green-700 hover:text-green-800">
+          Onboard Medical Assistance
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
-            <span className="text-red-600">🚨</span>
-            Medical Emergency: {flight.id}
+            Onboard Medical Assistance: {flight.id}
           </DialogTitle>
           <DialogDescription>
             Registered Medical Professional Information
@@ -402,12 +401,12 @@ function MedicalEmergencyDialog({ flight }: { flight: Flight }) {
 
         <div className="space-y-6">
           {/* Medical Professional Card */}
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-green-200 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-lg text-red-800">Registered Medical Professional</CardTitle>
+              <CardTitle className="text-lg text-green-800">Registered Medical Professional</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-red-200">
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200">
                 <div className="space-y-2">
                   <div className="font-semibold text-lg text-gray-900">Timothy Gao</div>
                   <div className="text-sm text-gray-600">Seat #: 11A</div>
@@ -422,17 +421,17 @@ function MedicalEmergencyDialog({ flight }: { flight: Flight }) {
           </Card>
 
           {/* Emergency Contact Information */}
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="border-green-200 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-lg text-orange-800">Emergency Contacts</CardTitle>
+              <CardTitle className="text-lg text-green-800">Emergency Contacts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3 bg-white rounded-lg border border-orange-200">
+                <div className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="font-semibold text-sm text-gray-900">Ground Medical Support</div>
                   <div className="text-sm text-gray-600">+1 (555) 123-4567</div>
                 </div>
-                <div className="p-3 bg-white rounded-lg border border-orange-200">
+                <div className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="font-semibold text-sm text-gray-900">Flight Crew</div>
                   <div className="text-sm text-gray-600">Cockpit Emergency Line</div>
                 </div>
@@ -539,29 +538,25 @@ function AIFlightRecommendationsSection({ flights, userProfile }: {
     return (
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6 transition-all duration-300 ease-in-out">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <span className="text-blue-600">🤖</span>
-            AI Flight Recommendations
+          <CardTitle className="text-2xl flex items-center justify-center gap-2">
+            Alternative Flight Recommendations
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Get safer alternatives for high-risk flights</span>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
-                onClick={() => {
-                  const riskThreshold = userProfile?.riskTolerance || 60;
-                  const highRiskFlight = flights.find((f: any) => f.riskScore > riskThreshold);
-                  if (highRiskFlight) {
-                    generateAIRecommendations(highRiskFlight);
-                  }
-                }}
-              >
-                Generate
-              </Button>
-            </div>
+          <div className="flex items-center justify-center">
+            <Button
+              size="default"
+              className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
+              onClick={() => {
+                const riskThreshold = userProfile?.riskTolerance || 60;
+                const highRiskFlight = flights.find((f: any) => f.riskScore > riskThreshold);
+                if (highRiskFlight) {
+                  generateAIRecommendations(highRiskFlight);
+                }
+              }}
+            >
+              Generate
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -574,7 +569,7 @@ function AIFlightRecommendationsSection({ flights, userProfile }: {
         <CardTitle className="text-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-blue-600">🎯</span>
-            AI Flight Recommendations
+            Alternative Flight Recommendations
             <span className="text-sm text-red-600 font-normal">(High-Risk Flights Only)</span>
           </div>
           <Button
@@ -1076,13 +1071,6 @@ export default function AviationDashboard() {
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6">
         {/* Hero Section */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center mb-4">
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium">
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
-              ATC Risk Management & Flight Operations
-            </div>
-          </div>
-
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 leading-tight">
             Aviation Safety
             <span className="block text-blue-600">Dashboard</span>
@@ -1095,9 +1083,6 @@ export default function AviationDashboard() {
                 <Plane className="h-5 w-5" />
                 Available Flights
               </h3>
-              <p className="text-blue-700 mb-3 text-sm">
-                Search for any of these flight numbers to view real-time safety data:
-              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-white rounded-md p-3 border border-blue-100">
                   <div className="font-bold text-blue-900">DL1102</div>
@@ -1195,7 +1180,7 @@ export default function AviationDashboard() {
         {/* Flight List */}
         <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl">My Flights</CardTitle>
+            <CardTitle className="text-2xl text-center">My Flights</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {loading ? (
@@ -1240,16 +1225,18 @@ export default function AviationDashboard() {
                             {flight.passengers} pax
                           </span>
                         </div>
+                        {userProfile && userProfile.riskTolerance && flight.riskScore > userProfile.riskTolerance && (
+                          <div className="mt-2">
+                            <Badge variant="destructive" className="flex items-center gap-2 text-xs px-2 py-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              High Risk (Your threshold: {userProfile.riskTolerance}%)
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4">
-                      {userProfile && userProfile.riskTolerance && flight.riskScore > userProfile.riskTolerance && (
-                        <Badge variant="destructive" className="flex items-center gap-2 text-sm px-3 py-1">
-                          <AlertTriangle className="h-4 w-4" />
-                          High Risk (Your threshold: {userProfile.riskTolerance}%)
-                        </Badge>
-                      )}
                       <div className="flex flex-col gap-2">
                         {flight.flight_status === 'In route' && (
                           <MedicalEmergencyDialog flight={flight} />

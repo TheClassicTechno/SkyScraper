@@ -135,7 +135,6 @@ const MainPage = () => {
                         <div className="space-y-4 sm:space-y-6">
                             <div className="text-center">
                                 <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Find Your Flight</h2>
-                                <p className="text-sm sm:text-base text-gray-600">Enter your flight details to get started</p>
                             </div>
 
                             <div className="space-y-3 sm:space-y-4">
