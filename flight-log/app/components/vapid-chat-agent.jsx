@@ -52,10 +52,6 @@ export function VapidAgent() {
               </p>
               
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <div className="text-2xl font-mono font-bold text-gray-900 mb-2">
-                  {displayNumber}
-                </div>
-                
                 <Button
                   onClick={handleCallClick}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg w-full"
