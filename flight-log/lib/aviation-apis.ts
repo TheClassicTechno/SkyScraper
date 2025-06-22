@@ -1,5 +1,4 @@
 import axios from 'axios';
-import moment from 'moment';
 
 // API Configuration - Only Free APIs
 const API_CONFIG = {
@@ -480,4 +479,127 @@ class AviationAPIService {
   }
 }
 
-export const aviationAPIService = new AviationAPIService(); 
+export const aviationAPIService = new AviationAPIService();
+
+// FlightLabs API Service for better flight coverage
+class FlightLabsService {
+  private apiKey: string;
+  private baseURL = 'https://app.goflightlabs.com';
+
+  constructor() {
+    this.apiKey = process.env.FLIGHTLABS_API_KEY || '';
+  }
+
+  private async makeRequest(endpoint: string, params: any = {}) {
+    if (!this.apiKey) {
+      throw new Error('FlightLabs API key not configured');
+    }
+
+    const url = `${this.baseURL}${endpoint}`;
+    const queryParams = new URLSearchParams({
+      access_key: this.apiKey,
+      ...params
+    });
+
+    try {
+      const response = await axios.get(`${url}?${queryParams}`, {
+        timeout: 15000,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(`FlightLabs API error for ${endpoint}:`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // Get flight by flight number (primary method)
+  async getFlightByNumber(flightNumber: string) {
+    return this.makeRequest('/flight', {
+      flight_number: flightNumber.toUpperCase()
+    });
+  }
+
+  // Get flights by route (alternative method)
+  async getFlightsByRoute(departure: string, arrival: string, date?: string) {
+    const params: any = {
+      dep_iata: departure.toUpperCase(),
+      arr_iata: arrival.toUpperCase()
+    };
+    
+    if (date) {
+      params.date = date;
+    }
+
+    return this.makeRequest('/flights', params);
+  }
+
+  // Get real-time flight data
+  async getRealTimeFlight(flightNumber: string) {
+    return this.makeRequest('/flight', {
+      flight_number: flightNumber.toUpperCase(),
+      live: 1
+    });
+  }
+
+  // Get historical flight data
+  async getHistoricalFlight(flightNumber: string, date: string) {
+    return this.makeRequest('/flight', {
+      flight_number: flightNumber.toUpperCase(),
+      date: date
+    });
+  }
+
+  // Search flights with multiple criteria
+  async searchFlights(criteria: {
+    flightNumber?: string;
+    departure?: string;
+    arrival?: string;
+    date?: string;
+    airline?: string;
+  }) {
+    const params: any = {};
+    
+    if (criteria.flightNumber) params.flight_number = criteria.flightNumber.toUpperCase();
+    if (criteria.departure) params.dep_iata = criteria.departure.toUpperCase();
+    if (criteria.arrival) params.arr_iata = criteria.arrival.toUpperCase();
+    if (criteria.date) params.date = criteria.date;
+    if (criteria.airline) params.airline_iata = criteria.airline.toUpperCase();
+
+    return this.makeRequest('/flights', params);
+  }
+}
+
+export const flightLabsService = new FlightLabsService();
+
+/**
+ * Fetch flight data from the aviation-request API
+ * @param flightNumber - The flight number to search for
+ * @returns Promise with flight data
+ */
+export async function fetchFlightData(flightNumber: string) {
+  try {
+    const response = await fetch(`/api/aviation-request?flight=${encodeURIComponent(flightNumber)}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Flight ${flightNumber} not found`);
+      } else if (response.status === 401) {
+        throw new Error('Invalid API key');
+      } else if (response.status === 429) {
+        throw new Error('API rate limit exceeded');
+      } else {
+        throw new Error('Failed to fetch flight data');
+      }
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching flight data:', error);
+    throw error;
+  }
+} 
