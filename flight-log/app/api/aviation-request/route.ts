@@ -65,10 +65,11 @@ import axios from 'axios';
 //     }
 //   ]
 // }
-
-
-export async function fetchFlightData(flightData: string) {
-  const accessKey = "edf76f86d8cdc89c062d049b94370a78"; // or process.env.AVIATION_STACK_KEY for server-side
+export async function fetchFlightData(
+  flightData: string,
+  onSuccess?: (data: any) => void
+) {
+  const accessKey = "edf76f86d8cdc89c062d049b94370a78"; // or process.env.AVIATION_STACK_KEY
   if (!accessKey) {
     throw new Error("AviationStack API key is missing.");
   }
@@ -81,10 +82,15 @@ export async function fetchFlightData(flightData: string) {
 
   try {
     const response = await axios.get(url);
-    console.log(response);
+    console.log(response.data);
+
+    if (onSuccess) {
+      onSuccess(response.data); // ✅ update context or do anything else
+    }
+
     return response.data;
   } catch (error) {
     console.error("Sorry! Not a valid airport or failed request.", error);
-    throw new Error("Failed to fetch flight data.");  // or `return { error: "Failed to fetch flight data." }` if you prefer returning an error object
-  }  
+    throw new Error("Failed to fetch flight data.");
+  }
 }
