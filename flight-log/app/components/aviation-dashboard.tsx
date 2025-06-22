@@ -105,7 +105,8 @@ function convertToFlightFormat(apiData: any): Flight[] {
         weather: 'Clear',
         atcLoad: 'Light',
         runway: '24L',
-        gate: 'A12'
+        gate: 'A12',
+        flight_status: 'In route'
       },
       'AA456': {
         passengers: 289,
@@ -114,7 +115,8 @@ function convertToFlightFormat(apiData: any): Flight[] {
         weather: 'Partly Cloudy',
         atcLoad: 'Moderate',
         runway: '16R',
-        gate: 'B8'
+        gate: 'B8',
+        flight_status: 'Pre-flight'
       },
       'BA001': {
         passengers: 525,
@@ -123,7 +125,8 @@ function convertToFlightFormat(apiData: any): Flight[] {
         weather: 'Clear',
         atcLoad: 'Moderate',
         runway: '08L',
-        gate: 'C15'
+        gate: 'C15',
+        flight_status: 'In route'
       }
     };
 
@@ -152,6 +155,7 @@ function convertToFlightFormat(apiData: any): Flight[] {
       atcLoad: stats.atcLoad,
       runway: stats.runway,
       gate: stats.gate,
+      flight_status: stats.flight_status
     };
   });
 }
