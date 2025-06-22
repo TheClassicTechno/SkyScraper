@@ -1,5 +1,6 @@
 import { streamText } from "ai"
 import { createAnthropic } from "@ai-sdk/anthropic"
+import { lettaAgent } from '@/lib/letta-agent';
 
 // Create Anthropic client for Claude
 const anthropic = createAnthropic({
@@ -8,7 +9,7 @@ const anthropic = createAnthropic({
 
 export async function POST(req: Request) {
   try {
-    const { messages, flightData } = await req.json()
+    const { messages, flightData, userId = 'demo-user' } = await req.json()
 
     // Check if API key is configured
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -21,6 +22,9 @@ export async function POST(req: Request) {
       })
     }
 
+    // Get Letta context for personalized responses
+    const lettaContext = await lettaAgent.generateClaudeContext(userId, messages[messages.length - 1]?.content || '', flightData);
+
     const systemPrompt = `You are an expert aviation safety AI assistant named skAI with deep knowledge of:
 - Flight risk assessment and safety protocols
 - Weather impact on aviation operations
@@ -32,6 +36,8 @@ export async function POST(req: Request) {
 - Flight status is either "Pre-flight" or "In route"
 
 You are a friendly and short and concise assistant who answers questions without any fluff.
+
+${lettaContext}
 
 Current flight data context:
 ${JSON.stringify(flightData, null, 2)}

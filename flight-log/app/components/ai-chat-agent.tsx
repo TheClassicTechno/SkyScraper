@@ -39,9 +39,10 @@ interface Message {
 
 interface AIChatAgentProps {
   flights: Flight[]
+  userProfile?: any
 }
 
-export function AIChatAgent({ flights }: AIChatAgentProps) {
+export function AIChatAgent({ flights, userProfile }: AIChatAgentProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showTranslator, setShowTranslator] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -129,13 +130,14 @@ How can I assist you today?`,
       setMessages((prev: Message[]) => [...prev, assistantMessage])
 
       // Check for high-risk flights and show alert if needed
-      const highRiskFlights = flights.filter(f => f.riskScore > 80)
+      const riskThreshold = userProfile?.riskTolerance || 60; // Default to 60 if no profile
+      const highRiskFlights = flights.filter(f => f.riskScore > riskThreshold)
       if (highRiskFlights.length > 0 && messageContent.toLowerCase().includes('risk')) {
         setTimeout(() => {
           const alertMessage: Message = {
             id: (Date.now() + 2).toString(),
             role: "assistant",
-            content: `⚠️ **SAFETY ALERT**: ${highRiskFlights.length} flights have critical risk scores (>80). Consider immediate action for flights: ${highRiskFlights.map(f => `${f.id} (${f.departure}→${f.arrival})`).join(', ')}`,
+            content: `⚠️ **PERSONALIZED SAFETY ALERT**: ${highRiskFlights.length} flights exceed your risk tolerance (${riskThreshold}%). Consider action for flights: ${highRiskFlights.map(f => `${f.id} (${f.departure}→${f.arrival}) - Risk: ${f.riskScore}%`).join(', ')}`,
             timestamp: new Date(),
           }
           setMessages((prev: Message[]) => [...prev, alertMessage])
