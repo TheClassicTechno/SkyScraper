@@ -1,12 +1,16 @@
 /**
  * Vapi Client - AI-powered calling and messaging
  * Get your API key at: https://vapi.ai
+ * 
+ * Note: This client is for server-side API operations (outbound calls, messages)
+ * For client-side voice interactions, use the VapidAgent component with Vapi Web SDK
  */
 
 interface VapiCallRequest {
   phoneNumber: string
   message?: string
   assistantId?: string
+  workflowId?: string  // Added support for workflows
   metadata?: Record<string, any>
 }
 
@@ -14,6 +18,7 @@ interface VapiMessageRequest {
   phoneNumber: string
   message: string
   assistantId?: string
+  workflowId?: string  // Added support for workflows
 }
 
 interface VapiResponse {
@@ -21,6 +26,21 @@ interface VapiResponse {
   message: string
   callId?: string
   error?: string
+  data?: any  // Added for additional response data
+}
+
+interface VapiAssistant {
+  id: string
+  name: string
+  model?: string
+  voice?: string
+  firstMessage?: string
+}
+
+interface VapiWorkflow {
+  id: string
+  name: string
+  description?: string
 }
 
 class VapiClient {
@@ -28,7 +48,7 @@ class VapiClient {
   private baseURL = 'https://api.vapi.ai'
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY || ''
+    this.apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY || process.env.VAPI_API_KEY || ''
   }
 
   /**
@@ -58,7 +78,7 @@ class VapiClient {
 
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     if (!this.apiKey) {
-      throw new Error('Vapi API key not configured. Please set NEXT_PUBLIC_VAPI_API_KEY in your environment variables.')
+      throw new Error('Vapi API key not configured. Please set NEXT_PUBLIC_VAPI_API_KEY or VAPI_API_KEY in your environment variables.')
     }
 
     const url = `${this.baseURL}${endpoint}`
@@ -87,7 +107,12 @@ class VapiClient {
         throw new Error(errorMessage)
       }
 
-      return response.json()
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        return response.json()
+      } else {
+        return { message: await response.text() }
+      }
     } catch (error: any) {
       if (error.message.includes('Failed to fetch')) {
         throw new Error('Network error: Unable to connect to Vapi API. Please check your internet connection.')
@@ -112,25 +137,39 @@ class VapiClient {
 
       const sanitizedPhone = this.sanitizePhoneNumber(request.phoneNumber)
       
+      // Prepare call payload
+      const callPayload: any = {
+        phoneNumber: sanitizedPhone,
+        metadata: {
+          source: 'vapid-agent',
+          safety: 'traffic-controller-verified',
+          ...request.metadata
+        },
+      }
+
+      // Add assistant or workflow ID
+      if (request.assistantId) {
+        callPayload.assistantId = request.assistantId
+      } else if (request.workflowId) {
+        callPayload.workflowId = request.workflowId
+      }
+
+      // Add custom message if provided
+      if (request.message) {
+        callPayload.message = request.message
+      }
+
       // Use the correct Vapi API endpoint for calls
       const response = await this.makeRequest('/call', {
         method: 'POST',
-        body: JSON.stringify({
-          phoneNumber: sanitizedPhone,
-          message: request.message || 'Hello, this is an AI-powered call.',
-          assistantId: request.assistantId,
-          metadata: {
-            source: 'vapid-agent',
-            safety: 'traffic-controller-verified',
-            ...request.metadata
-          },
-        }),
+        body: JSON.stringify(callPayload),
       })
 
       return {
         success: true,
         message: 'Call initiated successfully',
         callId: response.id || response.callId,
+        data: response
       }
     } catch (error: any) {
       console.error('Vapi call error:', error)
@@ -158,24 +197,34 @@ class VapiClient {
 
       const sanitizedPhone = this.sanitizePhoneNumber(request.phoneNumber)
       
+      // Prepare message payload
+      const messagePayload: any = {
+        phoneNumber: sanitizedPhone,
+        message: request.message,
+        metadata: {
+          source: 'vapid-agent',
+          safety: 'traffic-controller-verified'
+        }
+      }
+
+      // Add assistant or workflow ID
+      if (request.assistantId) {
+        messagePayload.assistantId = request.assistantId
+      } else if (request.workflowId) {
+        messagePayload.workflowId = request.workflowId
+      }
+
       // Use the correct Vapi API endpoint for messages
       const response = await this.makeRequest('/message', {
         method: 'POST',
-        body: JSON.stringify({
-          phoneNumber: sanitizedPhone,
-          message: request.message,
-          assistantId: request.assistantId,
-          metadata: {
-            source: 'vapid-agent',
-            safety: 'traffic-controller-verified'
-          }
-        }),
+        body: JSON.stringify(messagePayload),
       })
 
       return {
         success: true,
         message: 'Message sent successfully',
         callId: response.id || response.messageId,
+        data: response
       }
     } catch (error: any) {
       console.error('Vapi message error:', error)
@@ -214,13 +263,78 @@ class VapiClient {
   }
 
   /**
+   * Get available assistants
+   */
+  async getAssistants(): Promise<VapiAssistant[]> {
+    try {
+      const response = await this.makeRequest('/assistants')
+      return response.data || response.assistants || []
+    } catch (error: any) {
+      console.error('Failed to fetch assistants:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get available workflows
+   */
+  async getWorkflows(): Promise<VapiWorkflow[]> {
+    try {
+      const response = await this.makeRequest('/workflows')
+      return response.data || response.workflows || []
+    } catch (error: any) {
+      console.error('Failed to fetch workflows:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get specific call details
+   */
+  async getCall(callId: string): Promise<any> {
+    try {
+      const response = await this.makeRequest(`/call/${callId}`)
+      return response
+    } catch (error: any) {
+      console.error('Failed to fetch call details:', error)
+      return null
+    }
+  }
+
+  /**
+   * Cancel/end an active call
+   */
+  async endCall(callId: string): Promise<VapiResponse> {
+    try {
+      const response = await this.makeRequest(`/call/${callId}/end`, {
+        method: 'POST',
+      })
+
+      return {
+        success: true,
+        message: 'Call ended successfully',
+        data: response
+      }
+    } catch (error: any) {
+      console.error('Failed to end call:', error)
+      return {
+        success: false,
+        message: 'Failed to end call',
+        error: error.message,
+      }
+    }
+  }
+
+  /**
    * Test API connection
    */
   async testConnection(): Promise<boolean> {
     try {
-      await this.makeRequest('/health')
+      // Try to fetch assistants as a health check
+      await this.makeRequest('/assistants')
       return true
     } catch (error) {
+      console.error('API connection test failed:', error)
       return false
     }
   }
@@ -246,10 +360,34 @@ class VapiClient {
     
     return { configured: true, keyType, maskedKey }
   }
+
+  /**
+   * Validate configuration for web client usage
+   */
+  validateWebConfig(): { valid: boolean; issues: string[] } {
+    const issues: string[] = []
+    
+    if (!this.apiKey) {
+      issues.push('API key not configured')
+    }
+    
+    if (this.apiKey && this.apiKey.startsWith('sk_')) {
+      issues.push('Using private key in client-side code (security risk)')
+    }
+    
+    if (!process.env.NEXT_PUBLIC_WORKFLOW_ID && !process.env.WORKFLOW_ID) {
+      issues.push('Workflow ID not configured')
+    }
+    
+    return {
+      valid: issues.length === 0,
+      issues
+    }
+  }
 }
 
 // Export singleton instance
 export const vapiClient = new VapiClient()
 
 // Export types for use in components
-export type { VapiCallRequest, VapiMessageRequest, VapiResponse }
+export type { VapiCallRequest, VapiMessageRequest, VapiResponse, VapiAssistant, VapiWorkflow }
