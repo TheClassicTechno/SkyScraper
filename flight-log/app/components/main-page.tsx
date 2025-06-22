@@ -56,36 +56,6 @@ const MainPage = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    async function getFlightData(flightDatum: string) {
-        if (!flightDatum.trim()) {
-            setError('Please enter a flight number');
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-        setFlightData([]);
-
-        try {
-          const data = await fetchFlightData(flightDatum);
-          console.log('Flight data received:', data);
-          
-          const convertedFlights = convertToFlightFormat(data);
-          setFlightData(convertedFlights);
-          
-          // Store flight data in sessionStorage for the dashboard
-          sessionStorage.setItem('flightData', JSON.stringify(convertedFlights));
-          sessionStorage.setItem('searchedFlightNumber', flightDatum);
-          
-          // Navigate to dashboard with the data
-          router.push('/flight-score');
-        } catch (error) {
-          setError('Failed to fetch flight data. Please try again.');
-          console.error("Error:", error instanceof Error ? error.message : String(error));
-        } finally {
-          setLoading(false);
-        }
-    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
@@ -188,42 +158,6 @@ const MainPage = () => {
                             </div>
 
                             <div className="space-y-3 sm:space-y-4">
-                                {/* Flight Number Input */}
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Flight Number</label>
-                                    <div className="relative">
-                                        <Input
-                                            type="text"
-                                            placeholder="e.g., 1234 or AB12"
-                                            value={flightNumber}
-                                            onChange={(e) =>
-                                                setFlightNumber(
-                                                    e.target.value
-                                                        .replace(/[^0-9A-Z]/gi, "")  // Remove anything not 0-9 or A-Z
-                                                        .toUpperCase()               // Convert all letters to uppercase
-                                                )
-                                            }
-                                            className="h-10 sm:h-12 pl-3 sm:pl-4 pr-10 sm:pr-12 text-base sm:text-lg"
-                                            maxLength={6}
-                                        />
-                                        <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
-                                            <Plane className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Search Button */}
-                                <Link href="/flight-score">
-                                    <Button
-                                        onClick={() => getFlightData(flightNumber)}
-                                        disabled={!flightNumber}
-                                        className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
-                                    >
-                                        <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                                        Track Flight
-                                    </Button>
-                                </Link>
-
                                 {/* Quick Access Button */}
                                 <div className="text-center">
                                     <Link href="/flight-score">
