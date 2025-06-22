@@ -35,6 +35,8 @@ type Flight = {
   atcLoad: string;
   runway: string;
   gate: string;
+  flight_status: string;
+  countdownMinutes: number;
 };
 
 // Fallback mock data for when API is not available
@@ -54,6 +56,8 @@ const fallbackFlights: Flight[] = [
     atcLoad: "Moderate",
     runway: "24L",
     gate: "A12",
+    flight_status: "In route",
+    countdownMinutes: 87
   },
   {
     id: "UA5678",
@@ -70,6 +74,8 @@ const fallbackFlights: Flight[] = [
     atcLoad: "Heavy",
     runway: "16R",
     gate: "B8",
+    flight_status: "In route",
+    countdownMinutes: 0
   },
   {
     id: "DL9012",
@@ -86,6 +92,8 @@ const fallbackFlights: Flight[] = [
     atcLoad: "Light",
     runway: "08L",
     gate: "C15",
+    flight_status: "In route",
+    countdownMinutes: 409
   },
 ]
 
@@ -106,17 +114,19 @@ function convertToFlightFormat(apiData: any): Flight[] {
         atcLoad: 'Light',
         runway: '24L',
         gate: 'A12',
-        flight_status: 'In route'
+        flight_status: 'In route',
+        countdownMinutes: 87 // 1 hour 27 minutes
       },
       'AA456': {
         passengers: 289,
         crew: 8,
         riskScore: 65, // Medium-high risk - long haul, some delays
-        weather: 'Partly Cloudy',
+        weather: 'Partly Cloudy, Very High Turbulence',
         atcLoad: 'Moderate',
         runway: '16R',
         gate: 'B8',
-        flight_status: 'Pre-flight'
+        flight_status: 'Pre-flight',
+        countdownMinutes: 0
       },
       'BA001': {
         passengers: 525,
@@ -126,7 +136,8 @@ function convertToFlightFormat(apiData: any): Flight[] {
         atcLoad: 'Moderate',
         runway: '08L',
         gate: 'C15',
-        flight_status: 'In route'
+        flight_status: 'In route',
+        countdownMinutes: 409 // 6 hours 49 minutes
       }
     };
 
@@ -155,7 +166,8 @@ function convertToFlightFormat(apiData: any): Flight[] {
       atcLoad: stats.atcLoad,
       runway: stats.runway,
       gate: stats.gate,
-      flight_status: stats.flight_status
+      flight_status: stats.flight_status,
+      countdownMinutes: stats.countdownMinutes
     };
   });
 }
@@ -364,6 +376,70 @@ function FlightDetailsDialog({ flight }: { flight: (typeof fallbackFlights)[0] }
       </DialogContent>
     </Dialog>
   )
+}
+
+function MedicalEmergencyDialog({ flight }: { flight: Flight }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="destructive" size="sm" className="flex items-center gap-2">
+          🚨 Medical Emergency
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl flex items-center gap-2">
+            <span className="text-red-600">🚨</span>
+            Medical Emergency: {flight.id}
+          </DialogTitle>
+          <DialogDescription>
+            Registered Medical Professional Information
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Medical Professional Card */}
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="text-lg text-red-800">Registered Medical Professional</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-red-200">
+                <div className="space-y-2">
+                  <div className="font-semibold text-lg text-gray-900">Timothy Gao</div>
+                  <div className="text-sm text-gray-600">Seat #: 11A</div>
+                  <div className="text-sm text-gray-600">Field: Endocrinologist</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">Medical ID</div>
+                  <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">MD-2024-001</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Emergency Contact Information */}
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="text-lg text-orange-800">Emergency Contacts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="p-3 bg-white rounded-lg border border-orange-200">
+                  <div className="font-semibold text-sm text-gray-900">Ground Medical Support</div>
+                  <div className="text-sm text-gray-600">+1 (555) 123-4567</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-orange-200">
+                  <div className="font-semibold text-sm text-gray-900">Flight Crew</div>
+                  <div className="text-sm text-gray-600">Cockpit Emergency Line</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // AI Flight Recommendations Section Component
@@ -664,6 +740,162 @@ function AIFlightRecommendationsSection({ flights }: {
   );
 }
 
+function CountdownTimer({ initialMinutes, flightId, departure, arrival }: { 
+  initialMinutes: number; 
+  flightId: string; 
+  departure: string;
+  arrival: string;
+}) {
+  const [timeLeft, setTimeLeft] = useState(initialMinutes * 60); // Convert to seconds
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (totalSeconds: number) => {
+    if (totalSeconds <= 0) return "Arrived";
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50 text-sm px-3 py-1">
+        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+        In route • {formatTime(timeLeft)}
+      </Badge>
+      <FlightProgressGraphic 
+        flightId={flightId}
+        initialMinutes={initialMinutes}
+        currentSeconds={timeLeft}
+        departure={departure}
+        arrival={arrival}
+      />
+    </div>
+  );
+}
+
+function FlightProgressGraphic({ flightId, initialMinutes, currentSeconds, departure, arrival }: { 
+  flightId: string; 
+  initialMinutes: number; 
+  currentSeconds: number; 
+  departure: string;
+  arrival: string;
+}) {
+  const totalSeconds = initialMinutes * 60;
+  const remainingSeconds = currentSeconds;
+  const elapsedSeconds = totalSeconds - remainingSeconds;
+  
+  // Calculate progress percentage (0 = start, 100 = end)
+  const progressPercentage = Math.min((elapsedSeconds / totalSeconds) * 100, 100);
+  
+  // Different starting positions for each flight
+  const getStartingPosition = () => {
+    switch (flightId) {
+      case 'DL1102':
+        return 10; // Start 1/10 of the way
+      case 'BA001':
+        return 25; // Start 1/4 of the way
+      default:
+        return 0;
+    }
+  };
+  
+  const startingPosition = getStartingPosition();
+  const adjustedProgress = startingPosition + (progressPercentage * (100 - startingPosition) / 100);
+  
+  return (
+    <div className="relative w-full h-8 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-green-50"></div>
+      
+      {/* Point A (Departure) */}
+      <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+        <div className="text-xs text-gray-600 font-medium">{departure}</div>
+      </div>
+      
+      {/* Point B (Arrival) */}
+      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+        <div className="text-xs text-gray-600 font-medium">{arrival}</div>
+      </div>
+      
+      {/* Progress line */}
+      <div 
+        className="absolute top-1/2 transform -translate-y-1/2 h-1 bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000 ease-out"
+        style={{ 
+          left: '2rem', 
+          width: `${adjustedProgress}%`,
+          maxWidth: 'calc(100% - 4rem)'
+        }}
+      ></div>
+      
+      {/* Moving plane */}
+      <div 
+        className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-1000 ease-out"
+        style={{ 
+          left: `calc(2rem + ${adjustedProgress}% - 1rem)`,
+          maxLeft: 'calc(100% - 2rem)'
+        } as React.CSSProperties}
+      >
+        <div className="text-blue-600 text-lg transform rotate-0">
+          ✈️
+        </div>
+      </div>
+      
+      {/* Flight path dots */}
+      <div className="absolute inset-0 flex items-center justify-between px-8">
+        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+      </div>
+    </div>
+  );
+}
+
+function SeatbeltSign({ flightId }: { flightId: string }) {
+  // Determine light color based on flight
+  const getLightColor = () => {
+    switch (flightId) {
+      case 'DL1102':
+        return 'bg-green-500'; // Green light for DL1102
+      case 'BA001':
+        return 'bg-red-500'; // Red light for BA001
+      default:
+        return 'bg-yellow-500'; // Default yellow for other flights
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1 ml-2">
+      <span className="text-sm">💺belt</span>
+      <div className={`w-2 h-2 rounded-full ${getLightColor()} animate-pulse`}></div>
+    </div>
+  );
+}
+
 export default function AviationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(false);
@@ -753,7 +985,7 @@ export default function AviationDashboard() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">SkyScraper</h1>
-                <p className="text-xs text-gray-600">Real-time Flight Tracking</p>
+                <p className="text-xs text-gray-600">Fly with confidence.</p>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
@@ -926,7 +1158,12 @@ export default function AviationDashboard() {
                       <RiskScoreCircle score={flight.riskScore} size={100} />
 
                       <div>
-                        <div className="font-semibold text-lg">{flight.id}</div>
+                        <div className="font-semibold text-lg flex items-center">
+                          {flight.id}
+                          {flight.flight_status === 'In route' && (
+                            <SeatbeltSign flightId={flight.id} />
+                          )}
+                        </div>
                         <div className="text-base text-gray-600">
                           {flight.departure} → {flight.arrival}
                         </div>
@@ -950,7 +1187,15 @@ export default function AviationDashboard() {
                           High Risk
                         </Badge>
                       )}
-                      <FlightDetailsDialog flight={flight} />
+                      {flight.flight_status === 'In route' && (
+                        <CountdownTimer initialMinutes={flight.countdownMinutes} flightId={flight.id} departure={flight.departure} arrival={flight.arrival} />
+                      )}
+                      <div className="flex flex-col gap-2">
+                        {flight.flight_status === 'In route' && (
+                          <MedicalEmergencyDialog flight={flight} />
+                        )}
+                        <FlightDetailsDialog flight={flight} />
+                      </div>
                     </div>
                   </div>
                 ))}
