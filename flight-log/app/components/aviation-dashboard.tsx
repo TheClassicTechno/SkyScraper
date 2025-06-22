@@ -1212,7 +1212,6 @@ export default function AviationDashboard() {
         {/* AI Chat Agent */}
         <div className="w-[50vh] fixed bottom-6 z-50 flex gap-3">
           <AIChatAgent flights={flights} />
-          <VapidAgent />
         </div>
       </main>
 

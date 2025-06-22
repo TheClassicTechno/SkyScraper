@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { VapidAgent } from "./vapid-chat-agent"
 
 interface Flight {
   id: string
@@ -115,7 +116,7 @@ How can I assist you today?`,
       }
 
       const data = await response.json()
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -176,23 +177,26 @@ How can I assist you today?`,
 
   return (
     <>
- {/* Floating Chat Buttons Side by Side */}
-<div className="fixed bottom-6 right-6 z-50 flex gap-4">
-  <Button
-    onClick={() => setIsOpen(true)}
-    className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
-    size="icon"
-  >
-    <MessageCircle className="h-6 w-6" />
-  </Button>
-  <Button
-  onClick={() => window.open(' http://127.0.0.1:5000/', '_blank')}
-  className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-green-700 transition-all duration-200 hover:scale-105"
-  size="icon"
->
-  <MessageCircle className="h-6 w-6" />
-</Button>
-</div>
+      {/* Floating Chat Buttons Side by Side */}
+      <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+          size="icon"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+
+        <Button
+          onClick={() => window.open(' http://127.0.0.1:5000/', '_blank')}
+          className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105"
+          size="icon"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+
+        <VapidAgent />
+      </div>
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -223,11 +227,10 @@ How can I assist you today?`,
                 {messages.map((message: Message) => (
                   <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-[85%] p-3 rounded-lg text-sm break-words ${
-                        message.role === "user"
+                      className={`max-w-[85%] p-3 rounded-lg text-sm break-words ${message.role === "user"
                           ? "bg-blue-600 text-white rounded-br-sm"
                           : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                      }`}
+                        }`}
                     >
                       <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
                       <div className={`text-xs mt-1 opacity-70 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}>
