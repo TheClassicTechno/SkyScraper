@@ -122,7 +122,7 @@ function AIRecommendationCard({
   recommendation: FlightRecommendation; 
   onSelect: (route: FlightRoute) => void;
 }) {
-  const { safetyScore, efficiencyScore, comfortScore, explanation, priority } = recommendation;
+  const { explanation, priority } = recommendation;
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -144,8 +144,6 @@ function AIRecommendationCard({
     }
   };
 
-  const overallScore = Math.round((safetyScore + efficiencyScore + comfortScore) / 3);
-
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer border-2 border-blue-200 bg-blue-50" onClick={() => onSelect(recommendation.route)}>
       <CardContent className="p-4">
@@ -161,9 +159,6 @@ function AIRecommendationCard({
                   {getPriorityIcon(priority)}
                   <span className="ml-1">{priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
                 </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {overallScore}% Score
-                </Badge>
               </div>
             </div>
           </div>
@@ -171,9 +166,6 @@ function AIRecommendationCard({
             <div className="text-sm text-gray-600">
               FL{Math.round((recommendation.route.currentPosition?.altitude || 35000) / 1000)}
             </div>
-            <Badge variant={safetyScore >= 80 ? "default" : "secondary"}>
-              {safetyScore}% Safety
-            </Badge>
           </div>
         </div>
 
@@ -287,7 +279,7 @@ function AIRecommendationsSection({
                 ...originalFlight,
                 id: `AI-${index + 1}`,
                 airline: 'AI Optimized',
-                riskScore: Math.round(100 - recommendation.safetyScore),
+                riskScore: Math.round(100 - (recommendation.timePenalty * 0.5)), // Calculate based on time penalty
                 price: originalFlight.price + (recommendation.timePenalty * 2) // Add time penalty cost
               };
               onSelectFlight(recommendedFlight);

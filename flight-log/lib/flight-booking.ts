@@ -89,15 +89,34 @@ export class FlightBookingService {
 
   // Build booking URL for a specific provider
   private buildBookingUrl(provider: BookingProvider, flight: AlternativeFlight, price: number): string {
-    const params = new URLSearchParams({
-      from: flight.departure,
-      to: flight.arrival,
-      date: new Date().toISOString().split('T')[0], // Today's date as default
-      flight: flight.id,
-      price: price.toString()
-    });
-
-    return `${provider.baseUrl}/flights?${params.toString()}`;
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    
+    const departureDate = tomorrow.toISOString().split('T')[0];
+    
+    switch (provider.name) {
+      case 'Google Flights':
+        return `https://www.google.com/travel/flights?hl=en&tfs=${flight.departure}&tft=${flight.arrival}&d1=${departureDate}`;
+      
+      case 'Skyscanner':
+        return `https://www.skyscanner.com/transport/flights/${flight.departure}/${flight.arrival}/${departureDate}/`;
+      
+      case 'Kayak':
+        return `https://www.kayak.com/flights/${flight.departure}-${flight.arrival}/${departureDate}`;
+      
+      case 'Expedia':
+        return `https://www.expedia.com/Flights-Search?leg1=from:${flight.departure},to:${flight.arrival},departure:${departureDate}TANYT`;
+      
+      default:
+        // Fallback to generic search
+        const params = new URLSearchParams({
+          from: flight.departure,
+          to: flight.arrival,
+          date: departureDate
+        });
+        return `${provider.baseUrl}/flights?${params.toString()}`;
+    }
   }
 
   // Simulate booking process
@@ -130,13 +149,13 @@ export class FlightBookingService {
 
   // Get recommended booking provider based on flight characteristics
   public getRecommendedProvider(flight: AlternativeFlight): BookingProvider {
-    // Simple recommendation logic
-    if (flight.riskScore <= 25) {
+    // Prioritize Google Flights and Skyscanner as they have more reliable search URLs
+    if (flight.riskScore <= 30) {
       return this.providers.find(p => p.name === 'Google Flights') || this.providers[0];
     } else if (flight.price <= 400) {
       return this.providers.find(p => p.name === 'Skyscanner') || this.providers[0];
     } else {
-      return this.providers.find(p => p.name === 'Expedia') || this.providers[0];
+      return this.providers.find(p => p.name === 'Google Flights') || this.providers[0];
     }
   }
 

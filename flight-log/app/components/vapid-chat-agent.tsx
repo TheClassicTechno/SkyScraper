@@ -282,7 +282,7 @@ Just ask me anything!`
   return (
     <>
       {/* Floating Button */}
-      <div className="fixed bottom-6 right-22 z-50">
+      <div className="fixed bottom-6 right-42 z-50">
         <Button
           onClick={() => setIsOpen(true)}
           className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
