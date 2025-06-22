@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { VapidAgent } from "./vapid-chat-agent"
+import { TravelLanguageAssistant } from "./ai-translate";
 
 interface Flight {
   id: string
@@ -42,6 +43,7 @@ interface AIChatAgentProps {
 
 export function AIChatAgent({ flights }: AIChatAgentProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [showTranslator, setShowTranslator] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -187,13 +189,20 @@ How can I assist you today?`,
           <MessageCircle className="h-6 w-6" />
         </Button>
 
-        <Button
+        {/* <Button
           onClick={() => window.open(' http://127.0.0.1:5000/', '_blank')}
           className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105"
           size="icon"
         >
           <MessageCircle className="h-6 w-6" />
-        </Button>
+        </Button> */}
+        <Button
+        onClick={() => setShowTranslator(true)}
+        className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105"
+        size="icon"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
 
         <VapidAgent />
       </div>
@@ -303,6 +312,7 @@ How can I assist you today?`,
           </div>
         </DialogContent>
       </Dialog>
+      <TravelLanguageAssistant isOpen={showTranslator} onClose={() => setShowTranslator(false)} />
     </>
   )
 }
