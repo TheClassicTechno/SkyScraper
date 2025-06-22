@@ -216,61 +216,97 @@ export function findSaferAlternatives(
   date: string,
   maxRiskScore: number = 40
 ): AlternativeFlight[] {
-  // Mock alternative flights - in real implementation, this would query a flight database
-  const alternatives: AlternativeFlight[] = [
-    {
-      id: 'DL2345',
-      airline: 'Delta Air Lines',
-      departure,
-      arrival,
-      departureTime: '10:30',
-      arrivalTime: '13:45',
-      price: 450,
-      riskScore: 25,
-      delayRate: 8,
-      safetyLogs: ['Clean safety record for past 6 months', 'No mechanical issues reported'],
-    },
-    {
-      id: 'AA3456',
-      airline: 'American Airlines',
-      departure,
-      arrival,
-      departureTime: '12:15',
-      arrivalTime: '15:30',
-      price: 520,
-      riskScore: 30,
-      delayRate: 12,
-      safetyLogs: ['Minor weather delays only', 'Regular maintenance schedule'],
-    },
-    {
-      id: 'UA4567',
-      airline: 'United Airlines',
-      departure,
-      arrival,
-      departureTime: '14:00',
-      arrivalTime: '17:15',
-      price: 480,
-      riskScore: 35,
-      delayRate: 10,
-      safetyLogs: ['Good on-time performance', 'Recent safety inspection passed'],
-    },
-    {
-      id: 'SW5678',
-      airline: 'Southwest Airlines',
-      departure,
-      arrival,
-      departureTime: '16:30',
-      arrivalTime: '19:45',
-      price: 380,
-      riskScore: 28,
-      delayRate: 15,
-      safetyLogs: ['Consistent safety ratings', 'No recent incidents'],
-    },
-  ];
-  
-  return alternatives
-    .filter(flight => flight.riskScore <= maxRiskScore)
-    .sort((a, b) => a.riskScore - b.riskScore);
+  // Hardcoded alternatives for the three flights
+  const alternatives: Record<string, AlternativeFlight[]> = {
+    'DL1102': [
+      {
+        id: 'DL1103',
+        airline: 'Delta Airlines',
+        departure: 'ATL',
+        arrival: 'MIA',
+        departureTime: '15:30',
+        arrivalTime: '17:45',
+        price: 320,
+        riskScore: 20, // Even safer alternative
+        delayRate: 5,
+        safetyLogs: ['Excellent safety record', 'New aircraft', 'Experienced crew'],
+        bookingUrl: 'https://delta.com'
+      },
+      {
+        id: 'DL1104',
+        airline: 'Delta Airlines',
+        departure: 'ATL',
+        arrival: 'MIA',
+        departureTime: '18:15',
+        arrivalTime: '20:30',
+        price: 280,
+        riskScore: 30, // Good alternative
+        delayRate: 8,
+        safetyLogs: ['Good maintenance record', 'Standard route'],
+        bookingUrl: 'https://delta.com'
+      }
+    ],
+    'AA456': [
+      {
+        id: 'AA457',
+        airline: 'American Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '14:00',
+        arrivalTime: '17:15',
+        price: 450,
+        riskScore: 55, // Slightly better
+        delayRate: 12,
+        safetyLogs: ['Similar aircraft type', 'Alternative departure time'],
+        bookingUrl: 'https://aa.com'
+      },
+      {
+        id: 'AA458',
+        airline: 'American Airlines',
+        departure: 'JFK',
+        arrival: 'LAX',
+        departureTime: '20:30',
+        arrivalTime: '23:45',
+        price: 380,
+        riskScore: 60, // Comparable
+        delayRate: 15,
+        safetyLogs: ['Overnight flight', 'Less congestion'],
+        bookingUrl: 'https://aa.com'
+      }
+    ],
+    'BA001': [
+      {
+        id: 'BA002',
+        airline: 'British Airways',
+        departure: 'LHR',
+        arrival: 'JFK',
+        departureTime: '10:00',
+        arrivalTime: '13:15',
+        price: 850,
+        riskScore: 40, // Better alternative
+        delayRate: 6,
+        safetyLogs: ['Morning departure', 'Better weather conditions'],
+        bookingUrl: 'https://ba.com'
+      },
+      {
+        id: 'BA003',
+        airline: 'British Airways',
+        departure: 'LHR',
+        arrival: 'JFK',
+        departureTime: '16:30',
+        arrivalTime: '19:45',
+        price: 920,
+        riskScore: 50, // Comparable
+        delayRate: 8,
+        safetyLogs: ['Premium service', 'Experienced crew'],
+        bookingUrl: 'https://ba.com'
+      }
+    ]
+  };
+
+  // Return alternatives for the original flight, filtered by max risk score
+  const flightAlternatives = alternatives[originalFlight] || [];
+  return flightAlternatives.filter(alt => alt.riskScore <= maxRiskScore);
 }
 
 export function getFAAAlerts(airports: string[]): FAAMessage[] {

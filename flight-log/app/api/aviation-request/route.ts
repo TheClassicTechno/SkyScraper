@@ -1,19 +1,82 @@
 /**
- * This part of the code takes in a request with iata
- * Example: /v1/flights?access_key=YOURKEY&flight_iata=UA2557
- * using AviationStack using axios and NextJSRequest/Response
+ * Flight data API with THREE hardcoded flights only
+ * Provides complete flight path data for DL1102, AA456, and BA001
  */
 import axios from 'axios';
 import { NextRequest, NextResponse } from 'next/server';
-//TODO no flight number as a string yet flightNumber: string
-//Parse Output:
 
-// Helper function to generate mock data
-function getMockData(flightData: string) {
-  const flightNumber = flightData.replace(/[A-Z]/g, '');
-  const airline = flightData.replace(/[0-9]/g, '');
-  
-  return {
+const FLIGHTLABS_API_KEY = process.env.FLIGHTLABS_API_KEY;
+
+// THREE hardcoded flights with specific stats
+const HARDCODED_FLIGHTS: Record<string, any> = {
+  'DL1102': {
+    pagination: {
+      limit: 100,
+      offset: 0,
+      count: 1,
+      total: 1
+    },
+    data: [
+      {
+        flight_date: new Date().toISOString().split('T')[0],
+        flight_status: "scheduled",
+        departure: {
+          airport: "Hartsfield-Jackson Atlanta International Airport",
+          timezone: "America/New_York",
+          iata: "ATL",
+          icao: "KATL",
+          terminal: "A",
+          gate: "12",
+          delay: 0,
+          scheduled: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          estimated: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          actual: null,
+          estimated_runway: null,
+          actual_runway: null
+        },
+        arrival: {
+          airport: "Miami International Airport",
+          timezone: "America/New_York",
+          iata: "MIA",
+          icao: "KMIA",
+          terminal: "B",
+          gate: "15",
+          baggage: "3",
+          scheduled: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+          delay: null,
+          estimated: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+          actual: null,
+          estimated_runway: null,
+          actual_runway: null
+        },
+        airline: {
+          name: "Delta Airlines",
+          iata: "DL",
+          icao: "DL"
+        },
+        flight: {
+          number: "1102",
+          iata: "DL1102",
+          icao: "DL1102",
+          codeshared: null
+        },
+        aircraft: {
+          registration: "N12345",
+          iata: "B738",
+          icao: "B738",
+          model: "Boeing 737-800"
+        },
+        live: null,
+        route: {
+          waypoints: ["ATL", "MIA"],
+          distance: 965,
+          duration: 135
+        }
+      }
+    ],
+    source: 'hardcoded'
+  },
+  'AA456': {
     pagination: {
       limit: 100,
       offset: 0,
@@ -29,11 +92,11 @@ function getMockData(flightData: string) {
           timezone: "America/New_York",
           iata: "JFK",
           icao: "KJFK",
-          terminal: "A",
-          gate: "12",
-          delay: 0,
-          scheduled: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          estimated: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          terminal: "8",
+          gate: "A5",
+          delay: 15,
+          scheduled: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(),
+          estimated: new Date(Date.now() + 1.25 * 60 * 60 * 1000).toISOString(),
           actual: null,
           estimated_runway: null,
           actual_runway: null
@@ -43,66 +106,112 @@ function getMockData(flightData: string) {
           timezone: "America/Los_Angeles",
           iata: "LAX",
           icao: "KLAX",
-          terminal: "B",
-          gate: "15",
-          baggage: "3",
+          terminal: "4",
+          gate: "B12",
+          baggage: "2",
           scheduled: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-          delay: null,
-          estimated: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+          delay: 15,
+          estimated: new Date(Date.now() + 6.25 * 60 * 60 * 1000).toISOString(),
           actual: null,
           estimated_runway: null,
           actual_runway: null
         },
         airline: {
-          name: `${airline} Airlines`,
-          iata: airline,
-          icao: airline
+          name: "American Airlines",
+          iata: "AA",
+          icao: "AA"
         },
         flight: {
-          number: flightNumber,
-          iata: flightData.toUpperCase(),
-          icao: `${airline}${flightNumber}`,
+          number: "456",
+          iata: "AA456",
+          icao: "AA456",
           codeshared: null
         },
         aircraft: {
-          registration: "N12345",
-          iata: "B738",
-          icao: "B738",
-          model: "Boeing 737-800"
+          registration: "N78901",
+          iata: "B777",
+          icao: "B777",
+          model: "Boeing 777-200"
         },
-        live: null
+        live: null,
+        route: {
+          waypoints: ["JFK", "LAX"],
+          distance: 2789,
+          duration: 360
+        }
       }
-    ]
-  };
-}
-
-export async function fetchFlightData(flightData: string) {
-  const accessKey = "87c8bc19fb3b07fa55d3f9d374434400"; // or process.env.AVIATION_STACK_KEY
-
-  if (!accessKey) {
-    console.log("No API key found, using mock data");
-    return getMockData(flightData);
+    ],
+    source: 'hardcoded'
+  },
+  'BA001': {
+    pagination: {
+      limit: 100,
+      offset: 0,
+      count: 1,
+      total: 1
+    },
+    data: [
+      {
+        flight_date: new Date().toISOString().split('T')[0],
+        flight_status: "scheduled",
+        departure: {
+          airport: "London Heathrow Airport",
+          timezone: "Europe/London",
+          iata: "LHR",
+          icao: "EGLL",
+          terminal: "5",
+          gate: "A23",
+          delay: 0,
+          scheduled: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+          estimated: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+          actual: null,
+          estimated_runway: null,
+          actual_runway: null
+        },
+        arrival: {
+          airport: "New York John F. Kennedy International Airport",
+          timezone: "America/New_York",
+          iata: "JFK",
+          icao: "KJFK",
+          terminal: "7",
+          gate: "B8",
+          baggage: "4",
+          scheduled: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+          delay: null,
+          estimated: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+          actual: null,
+          estimated_runway: null,
+          actual_runway: null
+        },
+        airline: {
+          name: "British Airways",
+          iata: "BA",
+          icao: "BA"
+        },
+        flight: {
+          number: "001",
+          iata: "BA001",
+          icao: "BA001",
+          codeshared: null
+        },
+        aircraft: {
+          registration: "G-BOAC",
+          iata: "A380",
+          icao: "A380",
+          model: "Airbus A380-800"
+        },
+        live: null,
+        route: {
+          waypoints: ["LHR", "JFK"],
+          distance: 3451,
+          duration: 420
+        }
+      }
+    ],
+    source: 'hardcoded'
   }
+};
 
-  const url = `https://api.aviationstack.com/v1/flights?access_key=${accessKey}&flight_iata=${flightData.toUpperCase()}`;
-
-  try {
-    const response = await axios.get(url);
-    
-    // Check if the API returned valid data
-    if (response.data && response.data.data && response.data.data.length > 0) {
-      return response.data;
-    } else {
-      console.log("API returned empty data, using mock data for flight:", flightData);
-      return getMockData(flightData);
-    }
-  } catch (error) {
-    console.error("API request failed, using mock data for flight:", flightData, error);
-    return getMockData(flightData);
-  }
-}
-
-// Next.js API route handlers
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const flightNumber = searchParams.get('flight');
@@ -114,16 +223,21 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    const data = await fetchFlightData(flightNumber);
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching flight data:', error);
+  // Check if the flight number is one of our three allowed flights
+  const upperFlightNumber = flightNumber.toUpperCase();
+  if (!HARDCODED_FLIGHTS[upperFlightNumber]) {
     return NextResponse.json(
-      { error: 'Failed to fetch flight data' },
-      { status: 500 }
+      { 
+        error: `Flight ${upperFlightNumber} not found. Only DL1102, AA456, and BA001 are available.`,
+        availableFlights: ['DL1102', 'AA456', 'BA001']
+      },
+      { status: 404 }
     );
   }
+
+  // Return the hardcoded flight data
+  console.log(`✅ Returning hardcoded data for flight ${upperFlightNumber}`);
+  return NextResponse.json(HARDCODED_FLIGHTS[upperFlightNumber]);
 }
 
 export async function POST(request: NextRequest) {
@@ -138,12 +252,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await fetchFlightData(flightNumber);
-    return NextResponse.json(data);
+    // Reuse the GET logic for POST
+    const mockRequest = new NextRequest(`http://localhost/api/aviation-request?flight=${flightNumber}`);
+    return GET(mockRequest);
   } catch (error) {
-    console.error('Error fetching flight data:', error);
+    console.error('Error in POST request:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch flight data' },
+      { error: 'Failed to process request' },
       { status: 500 }
     );
   }
