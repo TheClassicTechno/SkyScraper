@@ -5,12 +5,63 @@ import { Search, Plane, Shield, Clock, MapPin, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from 'next/navigation';
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { fetchFlightData } from "../api/aviation-request/route"
 
 const MainPage = () => {
+
+    type Flight = {
+        id: string;
+        departure: string;
+        arrival: string;
+        departureTime: string;
+        arrivalTime: string;
+        date: string;
+        aircraft: string;
+        passengers: number;
+        crew: number;
+        riskScore: number;
+        weather: string;
+        atcLoad: string;
+        runway: string;
+        gate: string;
+      };
+
+    function convertToFlightFormat(apiData: any): Flight[] {
+        if (!apiData || !apiData.data || apiData.data.length === 0) return [];
+      
+        return apiData.data.map((item: any) => ({
+          id: item.flight?.iata || 'UNKNOWN',
+          departure: item.departure?.iata || 'UNKNOWN',
+          arrival: item.arrival?.iata || 'UNKNOWN',
+          departureTime: item.departure?.scheduled ? new Date(item.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
+          arrivalTime: item.arrival?.scheduled ? new Date(item.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'UNKNOWN',
+          date: item.flight_date || 'UNKNOWN',
+          aircraft: item.aircraft?.model || null,  // Might need adjustment if aircraft is null
+          passengers: null,  // Not provided by AviationStack
+          crew: null,        // Not provided by AviationStack
+          riskScore: Math.floor(Math.random() * 100), // Placeholder
+          weather: 'Unknown', // You can hook to weather API here
+          atcLoad: 'Unknown', // Placeholder or compute based on conditions
+          runway: item.arrival?.runway || null,
+          gate: item.arrival?.gate || null,
+        }));
+      }     
+      
+    const router = useRouter();
+
+    async function getFlightData(flightDatum: string) {
+        try {
+          const flightData = await fetchFlightData(flightDatum);
+          console.log(flightData);
+        } catch (error) {
+          router.push('/error')
+          console.error("Error:", error instanceof Error ? error.message : String(error));
+        }
+    }
+
     const [flightNumber, setFlightNumber] = useState("")
 
     return (
@@ -141,7 +192,7 @@ const MainPage = () => {
                                 {/* Search Button */}
                                 <Link href="/flight-score">
                                     <Button
-                                        onClick={() => fetchFlightData()}
+                                        onClick={() => getFlightData(flightNumber)}
                                         disabled={!flightNumber}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
                                     >

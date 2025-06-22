@@ -7,7 +7,7 @@ import axios from 'axios';
 //TODO no flight number as a string yet flightNumber: string
 //Parse Output:
 
-const data = {
+const mockData = {
   pagination: {
     limit: 100,
     offset: 0,
@@ -64,10 +64,9 @@ const data = {
   ]
 } as const;
 
-export async function fetchFlightData() {
+export async function fetchFlightData(flightData: string) {
 
   const accessKey = "87c8bc19fb3b07fa55d3f9d374434400"; // or process.env.AVIATION_STACK_KEY
-  const flightData = "DL0809";
 
   if (!accessKey) {
     throw new Error("AviationStack API key is missing.");
@@ -77,7 +76,6 @@ export async function fetchFlightData() {
 
   try {
     const response = await axios.get(url);
-    
     return response.data;
   } catch (error) {
     console.error("Sorry! Not a valid airport or failed request.", error);

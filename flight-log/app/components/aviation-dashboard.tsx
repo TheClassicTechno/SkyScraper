@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import { AIChatAgent } from "./ai-chat-agent"
 import { bookingReducer } from '@/lib/flight-booking'
 import FlightBookingModal from './flight-booking-modal'
@@ -15,7 +14,25 @@ import Link from "next/link"
 import { FlightRoute } from '@/lib/turbulence-data'
 
 // Mock flight data
-const flights = [
+
+type Flight = {
+  id: string;
+  departure: string;
+  arrival: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: string;
+  aircraft: string;
+  passengers: number;
+  crew: number;
+  riskScore: number;
+  weather: string;
+  atcLoad: string;
+  runway: string;
+  gate: string;
+};
+
+const initalFlights: Flight[] = [
   {
     id: "AA1234",
     departure: "JFK",
@@ -106,7 +123,7 @@ function RiskScoreCircle({ score, size = 120 }: { score: number; size?: number }
   )
 }
 
-function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
+function FlightDetailsDialog({ flight }: { flight: (typeof initalFlights)[0] }) {
   const [bookingState, bookingDispatch] = useReducer(bookingReducer, {
     isOpen: false,
     selectedFlight: null,
@@ -141,14 +158,14 @@ function FlightDetailsDialog({ flight }: { flight: (typeof flights)[0] }) {
     }
     
     // Aircraft factors
-    if (flight.aircraft.includes('737')) {
+    if (flight.aircraft?.includes('737')) {
       factors.push({
         factor: 'Aircraft Model',
         impact: 'Low',
         description: 'Boeing 737 has good safety record and modern systems',
         severity: 'green'
       });
-    } else if (flight.aircraft.includes('320')) {
+    } else if (flight.aircraft?.includes('320')) {
       factors.push({
         factor: 'Aircraft Model',
         impact: 'Low',
@@ -584,9 +601,9 @@ function AIFlightRecommendationsSection({ flights }: { flights: Array<{
 }
 
 export default function AviationDashboard() {
-  const totalFlights = flights.length
-  const highRiskFlights = flights.filter((f) => f.riskScore > 60).length
-  const averageRisk = Math.round(flights.reduce((sum, f) => sum + f.riskScore, 0) / flights.length)
+  const totalFlights = initalFlights.length
+  const highRiskFlights = initalFlights.filter((f) => f.riskScore > 60).length
+  const averageRisk = Math.round(initalFlights.reduce((sum, f) => sum + f.riskScore, 0) / initalFlights.length)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 relative overflow-hidden">
@@ -679,17 +696,17 @@ export default function AviationDashboard() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Low Risk (0-39%)</span>
-                  <Badge variant="default">{flights.filter((f) => f.riskScore < 40).length} flights</Badge>
+                  <Badge variant="default">{initalFlights.filter((f) => f.riskScore < 40).length} flights</Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Medium Risk (40-59%)</span>
                   <Badge variant="secondary">
-                    {flights.filter((f) => f.riskScore >= 40 && f.riskScore < 60).length} flights
+                    {initalFlights.filter((f) => f.riskScore >= 40 && f.riskScore < 60).length} flights
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">High Risk (60%+)</span>
-                  <Badge variant="destructive">{flights.filter((f) => f.riskScore >= 60).length} flights</Badge>
+                  <Badge variant="destructive">{initalFlights.filter((f) => f.riskScore >= 60).length} flights</Badge>
                 </div>
               </div>
             </CardContent>
@@ -730,7 +747,7 @@ export default function AviationDashboard() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-6">
-              {flights.map((flight) => (
+              {initalFlights.map((flight) => (
                 <div key={flight.id} className="flex items-center justify-between p-6 border border-gray-100 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/70 transition-all duration-200">
                   <div className="flex items-center gap-6">
                     <RiskScoreCircle score={flight.riskScore} size={100} />
@@ -769,10 +786,10 @@ export default function AviationDashboard() {
         </Card>
 
         {/* AI Flight Recommendations */}
-        <AIFlightRecommendationsSection flights={flights} />
+        <AIFlightRecommendationsSection flights={initalFlights} />
 
         {/* AI Chat Agent */}
-        <AIChatAgent flights={flights} />
+        <AIChatAgent flights={initalFlights} />
       </main>
 
       {/* Footer */}
