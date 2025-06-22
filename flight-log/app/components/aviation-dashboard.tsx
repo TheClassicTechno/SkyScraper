@@ -1160,8 +1160,8 @@ export default function AviationDashboard() {
                       <div>
                         <div className="font-semibold text-lg flex items-center">
                           {flight.id}
-                          {flight.flight_status === 'In route' && (
-                            <SeatbeltSign flightId={flight.id} />
+                          {flight.id === 'AA456' && (
+                            <span className="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full font-normal">Scheduled</span>
                           )}
                         </div>
                         <div className="text-base text-gray-600">
@@ -1187,9 +1187,6 @@ export default function AviationDashboard() {
                           High Risk
                         </Badge>
                       )}
-                      {flight.flight_status === 'In route' && (
-                        <CountdownTimer initialMinutes={flight.countdownMinutes} flightId={flight.id} departure={flight.departure} arrival={flight.arrival} />
-                      )}
                       <div className="flex flex-col gap-2">
                         {flight.flight_status === 'In route' && (
                           <MedicalEmergencyDialog flight={flight} />
@@ -1210,7 +1207,7 @@ export default function AviationDashboard() {
         )}
 
         {/* AI Chat Agent */}
-        <div className="w-[50vh] fixed bottom-6 z-50 flex gap-3">
+        <div className="fixed bottom-6 right-6 z-50 flex gap-4">
           <AIChatAgent flights={flights} />
         </div>
       </main>
