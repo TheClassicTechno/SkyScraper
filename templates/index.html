@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Communication System</title>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <title>Enhanced Flight Communication System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,310 +14,274 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-            min-height: 600px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .header {
             text-align: center;
             margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .header h1 {
-            color: #2c3e50;
             font-size: 2.5em;
             margin-bottom: 10px;
-            font-weight: 300;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .header p {
-            color: #7f8c8d;
-            font-size: 1.1em;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
+        .speech-display {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 15px;
+            padding: 25px;
             margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .control-group {
+            text-align: center;
+            min-height: 120px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .control-group label {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9em;
-        }
-
-        select {
-            padding: 12px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            font-size: 1em;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .mic-button {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            font-size: 3em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(238, 90, 36, 0.3);
-            margin: 20px auto;
+            transition: all 0.3s ease;
         }
 
-        .mic-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(238, 90, 36, 0.4);
-        }
-
-        .mic-button.active {
-            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+        .speech-display.active {
+            background: rgba(76, 175, 80, 0.3);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
             animation: pulse 2s infinite;
+        }
+
+        .speech-text {
+            font-size: 1.5em;
+            font-weight: 500;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .speech-meta {
+            font-size: 0.9em;
+            opacity: 0.8;
+            color: #FFD700;
+        }
+
+        .speech-placeholder {
+            font-style: italic;
+            opacity: 0.6;
+            font-size: 1.2em;
+        }
+
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .status-ready { background-color: #4CAF50; }
+        .status-not-ready { background-color: #f44336; }
+        .status-warning { background-color: #ff9800; }
+
+        .controls-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .control-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-section h3 {
+            margin-bottom: 20px;
+            color: #FFD700;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-panel {
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .result-card.error {
+            border-left-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .result-meta {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        .listening-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 2px solid #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        .listening-indicator.active {
+            display: block;
         }
 
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
 
-        .status {
+        .mic-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .connection-status {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             text-align: center;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 10px;
-            font-weight: 500;
+            font-weight: bold;
         }
 
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .connection-status.connected {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            color: #4CAF50;
         }
 
-        .status.listening {
-            background: #cce5ff;
-            color: #004085;
-            border: 1px solid #b3d9ff;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .recognized-speech {
-            background: #e8f5e8;
-            border: 2px solid #4caf50;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .recognized-speech h3 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-        }
-
-        .recognized-speech-text {
-            font-size: 1.2em;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .results {
-            margin-top: 30px;
-        }
-
-        .result-item {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .language-badge {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
-        .timestamp {
-            color: #6c757d;
-            font-size: 0.8em;
-        }
-
-        .text-content {
-            margin-bottom: 10px;
-        }
-
-        .original-text {
-            font-style: italic;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .translated-text {
-            font-size: 1.1em;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-
-        .manual-input {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .manual-input h3 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-
-        .input-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .input-row input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1em;
-            min-width: 200px;
-        }
-
-        .input-row input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .translate-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background 0.3s ease;
-        }
-
-        .translate-btn:hover {
-            background: #5a6fd8;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .connection-status.disconnected {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+            color: #f44336;
         }
 
         @media (max-width: 768px) {
+            .controls-panel {
+                grid-template-columns: 1fr;
+            }
+            
             .container {
                 padding: 20px;
-                margin: 10px;
             }
             
             .header h1 {
                 font-size: 2em;
             }
             
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .mic-button {
-                width: 100px;
-                height: 100px;
-                font-size: 2.5em;
-            }
-            
-            .input-row {
-                flex-direction: column;
+            .speech-text {
+                font-size: 1.2em;
             }
         }
     </style>
@@ -325,328 +289,423 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>✈️ Flight Communication</h1>
-            <p>Real-time speech translation for international passengers</p>
+            <h1>✈️ Enhanced Flight Communication System</h1>
+            <p>Real-time speech translation for aviation professionals</p>
         </div>
 
-        <div class="controls">
-            <div class="control-group">
-                <label for="targetLanguage">Target Language</label>
-                <select id="targetLanguage">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="it">Italian</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                    <option value="zh">Chinese</option>
-                    <option value="ar">Arabic</option>
-                    <option value="hi">Hindi</option>
-                    <option value="th">Thai</option>
-                    <option value="vi">Vietnamese</option>
-                </select>
+        <!-- Connection Status -->
+        <div class="connection-status disconnected" id="connection-status">
+            🔌 Connecting to server...
+        </div>
+
+        <!-- Speech Recognition Display Panel -->
+        <div class="speech-display" id="speech-display">
+            <div class="speech-text" id="speech-text">
+                <span class="speech-placeholder">🎙️ Speech recognition ready - speak to see your text here</span>
             </div>
+            <div class="speech-meta" id="speech-meta"></div>
         </div>
 
-        <button id="micButton" class="mic-button" title="Click to start/stop listening">
-            🎤
-        </button>
-
-        <div id="status" class="status">
-            Ready to connect...
-        </div>
-
-        <div class="recognized-speech">
-            <div>
-                <h3>🎙️ Recognized Speech:</h3>
-                <div id="recognized-speech-text" class="recognized-speech-text">
-                    Waiting for speech...
+        <div class="status-panel">
+            <div class="status-card">
+                <div id="speech-status">
+                    <span class="status-indicator status-not-ready"></span>
+                    Speech Recognition: Checking...
+                </div>
+            </div>
+           
+            <div class="status-card">
+                <div id="gemini-status">
+                    <span class="status-indicator status-not-ready"></span>
+                    Gemini AI: Checking...
+                </div>
+            </div>
+            <div class="status-card">
+                <div id="system-status">
+                    <span class="status-indicator status-not-ready"></span>
+                    System: Checking...
                 </div>
             </div>
         </div>
 
-        <div class="manual-input">
-            <h3>Manual Translation</h3>
-            <div class="input-row">
-                <input type="text" id="manualText" placeholder="Enter text to translate...">
-                <select id="sourceLanguage">
-                    <option value="auto">Auto-detect</option>
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="it">Italian</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                    <option value="zh">Chinese</option>
-                    <option value="ar">Arabic</option>
-                    <option value="hi">Hindi</option>
-                    <option value="th">Thai</option>
-                    <option value="vi">Vietnamese</option>
-                </select>
-                <button id="translateBtn" class="translate-btn">Translate</button>
+        <div class="listening-indicator" id="listening-indicator">
+            <div class="mic-icon">🎙️</div>
+            <div><strong>Listening...</strong></div>
+            <div>Speak clearly for accurate recognition</div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-section">
+                <h3>🎙️ Voice Translation</h3>
+                
+                <div class="form-group">
+                    <label for="target-language">Target Language:</label>
+                    <select id="target-language">
+                        <option value="en" selected>English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="context-select">Aviation Context:</label>
+                    <select id="context-select">
+                        <option value="general">General Aviation</option>
+                        <option value="atc">Air Traffic Control</option>
+                        <option value="emergency">Emergency Procedures</option>
+                        <option value="weather">Weather Reports</option>
+                        <option value="navigation">Navigation</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sensitivity">Microphone Sensitivity:</label>
+                    <input type="range" id="sensitivity" min="0.1" max="1" step="0.1" value="0.5">
+                    <span id="sensitivity-value">0.5</span>
+                </div>
+
+                <div class="form-group">
+                    <button id="start-listening" class="btn btn-primary" disabled>Start Listening</button>
+                    <button id="stop-listening" class="btn btn-danger" disabled>Stop Listening</button>
+                    <button id="demo-speech" class="btn btn-secondary">Demo Speech</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>📝 Text Translation</h3>
+                
+                <div class="form-group">
+                    <label for="source-language">Source Language:</label>
+                    <select id="source-language">
+                        <option value="auto">Auto-detect</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="text-target-language">Target Language:</label>
+                    <select id="text-target-language">
+                        <option value="en" selected>English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-text">Text to Translate:</label>
+                    <textarea id="input-text" placeholder="Enter text for translation..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button id="translate-text" class="btn btn-secondary">Translate Text</button>
+                    <button id="test-system" class="btn btn-secondary">Test System</button>
+                </div>
             </div>
         </div>
 
-        <div id="results" class="results">
-            <!-- Results will appear here -->
+        <div class="results-panel">
+            <h3>📊 Translation Results</h3>
+            <div id="results-container">
+                <div class="result-card">
+                    <p><em>Translation results will appear here...</em></p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        class FlightCommunicationApp {
-            constructor() {
-                this.socket = null;
-                this.isListening = false;
-                this.isConnected = false;
-                
-                this.initializeElements();
-                this.connectSocket();
-                this.setupEventListeners();
-            }
+        // Initialize real Socket.IO connection
+        const socket = io();
+        
+        let isListening = false;
+        let systemReady = false;
 
-            initializeElements() {
-                this.micButton = document.getElementById('micButton');
-                this.status = document.getElementById('status');
-                this.results = document.getElementById('results');
-                this.targetLanguage = document.getElementById('targetLanguage');
-                this.manualText = document.getElementById('manualText');
-                this.sourceLanguage = document.getElementById('sourceLanguage');
-                this.translateBtn = document.getElementById('translateBtn');
-                this.recognizedSpeechText = document.getElementById('recognized-speech-text');
-            }
+        // DOM elements
+        const startBtn = document.getElementById('start-listening');
+        const stopBtn = document.getElementById('stop-listening');
+        const demoBtn = document.getElementById('demo-speech');
+        const translateBtn = document.getElementById('translate-text');
+        const testBtn = document.getElementById('test-system');
+        const resultsContainer = document.getElementById('results-container');
+        const listeningIndicator = document.getElementById('listening-indicator');
+        const speechDisplay = document.getElementById('speech-display');
+        const speechText = document.getElementById('speech-text');
+        const speechMeta = document.getElementById('speech-meta');
+        const sensitivitySlider = document.getElementById('sensitivity');
+        const sensitivityValue = document.getElementById('sensitivity-value');
+        const connectionStatus = document.getElementById('connection-status');
+        const speechStatus = document.getElementById('speech-status');
+        const geminiStatus = document.getElementById('gemini-status');
+        const systemStatusEl = document.getElementById('system-status');
 
-            connectSocket() {
-                this.socket = io({
-                    transports: ['websocket', 'polling']
-                });
+        // Update sensitivity display
+        sensitivitySlider.addEventListener('input', function() {
+            sensitivityValue.textContent = this.value;
+        });
 
-                this.socket.on('connect', () => {
-                    this.isConnected = true;
-                    this.updateStatus('Connected to flight communication system', 'connected');
-                    console.log('✅ Connected to server');
-                });
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            connectionStatus.textContent = '✅ Connected to server';
+            connectionStatus.className = 'connection-status connected';
+        });
 
-                this.socket.on('disconnect', () => {
-                    this.isConnected = false;
-                    this.isListening = false;
-                    this.updateMicButton();
-                    this.updateStatus('Disconnected from server', 'error');
-                    console.log('❌ Disconnected from server');
-                });
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+            connectionStatus.textContent = '❌ Disconnected from server';
+            connectionStatus.className = 'connection-status disconnected';
+            isListening = false;
+            updateListeningUI();
+        });
 
-                this.socket.on('status', (data) => {
-                    this.updateStatus(data.message, this.isListening ? 'listening' : 'connected');
-                    console.log('📊 Status:', data);
-                });
-
-                //✅ FIXED: Listen for 'speech_recognized' (matches backend)
-                this.socket.on('speech_recognized', (data) => {
-                    console.log('🎙️ Speech recognized:', data);
-                    this.displayRecognizedSpeech(data.original_text || '');
-                });
-                // socket.on('speech_recognized', function(data) {
-                //     console.log('🎙️ Speech recognized:', data);
-                //     document.getElementById('recognized-speech-text').textContent = data.original_text || '';
-                // });
-
-                // This handles the translation display
-                this.socket.on('translation_result', (data) => {
-                    console.log('🔄 Translation result:', data);
-                    this.displayResult(data);
-                });
-
-                this.socket.on('error', (data) => {
-                    console.error('❌ Socket error:', data);
-                    this.updateStatus(`Error: ${data.message}`, 'error');
-                });
-
-                // Add debugging for all events
-                this.socket.onAny((eventName, ...args) => {
-                    console.log(`📡 Received event: ${eventName}`, args);
-                });
-            }
-
-            displayRecognizedSpeech(text) {
-                if (text && text.trim()) {
-                    this.recognizedSpeechText.textContent = text;
-                    this.recognizedSpeechText.style.fontStyle = 'normal';
+        socket.on('status', function(data) {
+            console.log('Status update:', data);
+            
+            // Update system status indicators
+            if (data.speech_available !== undefined) {
+                const indicator = speechStatus.querySelector('.status-indicator');
+                if (data.speech_available) {
+                    indicator.className = 'status-indicator status-ready';
+                    speechStatus.innerHTML = '<span class="status-indicator status-ready"></span>Speech Recognition: Ready';
                 } else {
-                    this.recognizedSpeechText.textContent = 'Listening...';
-                    this.recognizedSpeechText.style.fontStyle = 'italic';
+                    indicator.className = 'status-indicator status-not-ready';
+                    speechStatus.innerHTML = '<span class="status-indicator status-not-ready"></span>Speech Recognition: Not Available';
                 }
             }
 
-            setupEventListeners() {
-                this.micButton.addEventListener('click', () => {
-                    this.toggleListening();
-                });
-
-                this.translateBtn.addEventListener('click', () => {
-                    this.translateManualText();
-                });
-
-                this.manualText.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.translateManualText();
-                    }
-                });
-
-                // Request microphone permission on first interaction
-                document.addEventListener('click', () => {
-                    this.requestMicrophonePermission();
-                }, { once: true });
-            }
-
-            async requestMicrophonePermission() {
-                try {
-                    await navigator.mediaDevices.getUserMedia({ audio: true });
-                    console.log('🎤 Microphone permission granted');
-                } catch (error) {
-                    console.error('🎤 Microphone permission denied:', error);
-                    this.updateStatus('Microphone permission required for speech recognition', 'error');
-                }
-            }
-
-            toggleListening() {
-                if (!this.isConnected) {
-                    this.updateStatus('Not connected to server', 'error');
-                    return;
-                }
-
-                if (this.isListening) {
-                    this.stopListening();
+            if (data.gemini_available !== undefined) {
+                const indicator = geminiStatus.querySelector('.status-indicator');
+                if (data.gemini_available) {
+                    indicator.className = 'status-indicator status-ready';
+                    geminiStatus.innerHTML = '<span class="status-indicator status-ready"></span>Gemini AI: Ready';
                 } else {
-                    this.startListening();
+                    indicator.className = 'status-indicator status-warning';
+                    geminiStatus.innerHTML = '<span class="status-indicator status-warning"></span>Gemini AI: Not Available';
                 }
             }
 
-            startListening() {
-                const targetLang = this.targetLanguage.value;
-                
-                console.log(`🎙️ Starting to listen for ${targetLang}`);
-                
-                this.socket.emit('start_listening', {
-                    language: targetLang,
-                    context: 'aviation',
-                    sensitivity: 0.5
-                });
-                
-                this.isListening = true;
-                this.updateMicButton();
-                this.updateStatus(`Listening for ${this.getLanguageName(targetLang)}...`, 'listening');
-                this.displayRecognizedSpeech('Listening...');
-            }
-
-            stopListening() {
-                console.log('🛑 Stopping listening');
-                this.socket.emit('stop_listening');
-                this.isListening = false;
-                this.updateMicButton();
-                this.updateStatus('Listening stopped', 'connected');
-                this.displayRecognizedSpeech('Waiting for speech...');
-            }
-
-            translateManualText() {
-                const text = this.manualText.value.trim();
-                if (!text) return;
-
-                const sourceLang = this.sourceLanguage.value;
-                const targetLang = this.targetLanguage.value;
-
-                console.log(`🔄 Manual translation: "${text}" from ${sourceLang} to ${targetLang}`);
-
-                this.socket.emit('translate_text', {
-                    text: text,
-                    source_language: sourceLang,
-                    target_language: targetLang,
-                    context: 'general'
-                });
-
-                this.translateBtn.innerHTML = 'Translating... <div class="loading"></div>';
-                this.translateBtn.disabled = true;
-
-                setTimeout(() => {
-                    this.translateBtn.innerHTML = 'Translate';
-                    this.translateBtn.disabled = false;
-                }, 3000);
-            }
-
-            updateMicButton() {
-                if (this.isListening) {
-                    this.micButton.classList.add('active');
-                    this.micButton.textContent = '🛑';
-                    this.micButton.title = 'Click to stop listening';
+            if (data.system_ready !== undefined) {
+                systemReady = data.system_ready;
+                const indicator = systemStatusEl.querySelector('.status-indicator');
+                if (data.system_ready) {
+                    indicator.className = 'status-indicator status-ready';
+                    systemStatusEl.innerHTML = '<span class="status-indicator status-ready"></span>System: Ready';
+                    startBtn.disabled = false;
                 } else {
-                    this.micButton.classList.remove('active');
-                    this.micButton.textContent = '🎤';
-                    this.micButton.title = 'Click to start listening';
+                    indicator.className = 'status-indicator status-not-ready';
+                    systemStatusEl.innerHTML = '<span class="status-indicator status-not-ready"></span>System: Not Ready';
+                    startBtn.disabled = true;
                 }
             }
+            
+            if (data.listening !== undefined) {
+                isListening = data.listening;
+                updateListeningUI();
+            }
+        });
 
-            updateStatus(message, type = '') {
-                this.status.textContent = message;
-                this.status.className = `status ${type}`;
+        socket.on('translation_result', function(data) {
+            console.log('Translation result:', data);
+            displayResult(data);
+        });
+
+        socket.on('speech_recognized', function(data) {
+            console.log('Speech recognized:', data);
+            displaySpeechRecognition(data);
+            displayResult(data, 'Speech Recognition');
+        });
+
+        socket.on('error', function(data) {
+            console.error('Error:', data);
+            displayError(data.message);
+        });
+
+        socket.on('test_results', function(data) {
+            console.log('Test results:', data);
+            displayTestResults(data);
+        });
+
+        // Button event handlers
+        startBtn.addEventListener('click', function() {
+            if (!systemReady) {
+                displayError('System not ready. Please wait for initialization.');
+                return;
             }
 
-            displayResult(data) {
-                const resultDiv = document.createElement('div');
-                resultDiv.className = 'result-item';
-                
-                const timestamp = new Date(data.timestamp).toLocaleTimeString();
-                const sourceLang = this.getLanguageName(data.source_language);
-                const targetLang = this.getLanguageName(data.target_language);
-                
-                resultDiv.innerHTML = `
-                    <div class="result-header">
-                        <div>
-                            <span class="language-badge">${sourceLang} → ${targetLang}</span>
-                            <small style="margin-left: 10px; color: #666;">(${data.method || 'unknown'})</small>
-                        </div>
-                        <span class="timestamp">${timestamp}</span>
-                    </div>
-                    <div class="text-content">
-                        ${data.original_text !== data.translated_text ? 
-                            `<div class="original-text">"${data.original_text}"</div>` : ''
-                        }
-                        <div class="translated-text">${data.translated_text}</div>
-                    </div>
-                `;
-                
-                this.results.insertBefore(resultDiv, this.results.firstChild);
-                
-                // Limit to 10 results
-                while (this.results.children.length > 10) {
-                    this.results.removeChild(this.results.lastChild);
-                }
+            const targetLang = document.getElementById('target-language').value;
+            const context = document.getElementById('context-select').value;
+            const sensitivity = parseFloat(document.getElementById('sensitivity').value);
+            
+            console.log('Starting listening with:', { targetLang, context, sensitivity });
+            
+            socket.emit('start_listening', {
+                language: targetLang,
+                context: context,
+                sensitivity: sensitivity
+            });
+        });
 
-                // Clear manual input if it was used
-                if (this.manualText.value.trim() === data.original_text) {
-                    this.manualText.value = '';
-                }
+        stopBtn.addEventListener('click', function() {
+            console.log('Stopping listening');
+            socket.emit('stop_listening');
+        });
+
+        // Demo button to show your example speech
+        demoBtn.addEventListener('click', function() {
+            const demoData = {
+                original_text: "hey guys we're Landing in 5 minutes",
+                source_language: "en",
+                confidence: 0.92,
+                timestamp: new Date().toISOString(),
+                method: "Demo - Google Speech Recognition"
+            };
+            
+            displaySpeechRecognition(demoData);
+            displayResult(demoData, 'Speech Recognition Demo');
+        });
+
+        translateBtn.addEventListener('click', function() {
+            const text = document.getElementById('input-text').value.trim();
+            if (!text) {
+                displayError('Please enter text to translate');
+                return;
             }
+            
+            const sourceLang = document.getElementById('source-language').value;
+            const targetLang = document.getElementById('text-target-language').value;
+            const context = document.getElementById('context-select').value;
+            
+            console.log('Translating text:', { text, sourceLang, targetLang, context });
+            
+            socket.emit('translate_text', {
+                text: text,
+                source_language: sourceLang,
+                target_language: targetLang,
+                context: context
+            });
+        });
 
-            getLanguageName(code) {
-                const languages = {
-                    'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
-                    'it': 'Italian', 'pt': 'Portuguese', 'ru': 'Russian', 'ja': 'Japanese',
-                    'ko': 'Korean', 'zh': 'Chinese', 'ar': 'Arabic', 'hi': 'Hindi',
-                    'th': 'Thai', 'vi': 'Vietnamese', 'auto': 'Auto-detect'
-                };
-                return languages[code] || code;
+        testBtn.addEventListener('click', function() {
+            const targetLang = document.getElementById('text-target-language').value;
+            console.log('Testing system with target language:', targetLang);
+            
+            socket.emit('test_translation', {
+                language: targetLang
+            });
+        });
+
+        // Speech recognition display function
+        function displaySpeechRecognition(data) {
+            const confidence = (data.confidence * 100).toFixed(1);
+            const confidenceColor = confidence > 80 ? '#4CAF50' : confidence > 60 ? '#ff9800' : '#f44336';
+            
+            // Update the main speech display
+            speechText.innerHTML = `"${data.original_text}"`;
+            speechMeta.innerHTML = `
+                <strong>Detected Language:</strong> ${data.source_language} | 
+                <strong>Confidence:</strong> <span style="color: ${confidenceColor};">${confidence}%</span> | 
+                <strong>Method:</strong> ${data.method} | 
+                <strong>Time:</strong> ${new Date(data.timestamp).toLocaleTimeString()}
+            `;
+            
+            // Add visual feedback
+            speechDisplay.classList.add('active');
+            setTimeout(() => {
+                speechDisplay.classList.remove('active');
+            }, 3000);
+        }
+
+        function updateListeningUI() {
+            if (isListening) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                listeningIndicator.classList.add('active');
+                speechText.innerHTML = '<span class="speech-placeholder">🎙️ Listening... speak now</span>';
+                speechMeta.innerHTML = '';
+            } else {
+                startBtn.disabled = !systemReady;
+                stopBtn.disabled = true;
+                listeningIndicator.classList.remove('active');
+                if (speechText.innerHTML.includes('Listening...')) {
+                    speechText.innerHTML = '<span class="speech-placeholder">🎙️ Speech recognition ready - speak to see your text here</span>';
+                    speechMeta.innerHTML = '';
+                }
             }
         }
 
-        // Initialize the app when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Flight Communication App starting...');
-            new FlightCommunicationApp();
-        });
+        function displayResult(data, type = 'Translation') {
+            const resultCard = document.createElement('div');
+            resultCard.className = 'result-card';
+            
+            const confidence = (data.confidence * 100).toFixed(1);
+            const confidenceColor = confidence > 80 ? '#4CAF50' : confidence > 60 ? '#ff9800' : '#f44336';
+            
+            resultCard.innerHTML = `
+                <div><strong>${type} Result:</strong></div>
+                <div style="margin: 10px 0;">
+                    <div><strong>Original:</strong> ${data.original_text}</div>
+                    ${data.translated_text ? `<div><strong>Translated:</strong> ${data.translated_text}</div>` : ''}
+                </div>
+                <div class="result-meta">
+                    <span>Language: ${data.source_language}${data.target_language ? ' → ' + data.target_language : ''}</span> |
+                    <span>Confidence: <span style="color: ${confidenceColor};">${confidence}%</span></span> |
+                    <span>Method: ${data.method}</span> |
+                    <span>Time: ${new Date(data.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `;
+            
+            resultsContainer.insertBefore(resultCard, resultsContainer.firstChild);
+            
+            // Keep only last 10 results
+            while (resultsContainer.children.length > 10) {
+                resultsContainer.removeChild(resultsContainer.lastChild);
+            }
+        }
+
+        function displayTestResults(data) {
+            data.results.forEach((result, index) => {
+                setTimeout(() => {
+                    displayResult({
+                        original_text: result.original,
+                        translated_text: result.translated,
+                        confidence: result.confidence,
+                        method: result.method,
+                        source_language: 'en',
+                        target_language: data.target_language,
+                        timestamp: new Date().toISOString()
+                    }, 'Test Translation');
+                }, index * 500);
+            });
+        }
+
+        function displayError(message) {
+            const resultCard = document.createElement('div');
+            resultCard.className = 'result-card error';
+            resultCard.innerHTML = `
+                <div><strong>Error:</strong></div>
+                <div>${message}</div>
+                <div class="result-meta">Time: ${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            resultsContainer.insertBefore(resultCard, resultsContainer.firstChild);
+        }
+
+        // Initialize UI
+        updateListeningUI();
+        
+        console.log('Frontend initialized and ready');
     </script>
 </body>
 </html>
