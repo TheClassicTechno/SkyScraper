@@ -272,7 +272,7 @@ export function TravelLanguageAssistant({ isOpen, onClose }: { isOpen: boolean, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[800px] flex flex-col p-0" showCloseButton={false}>
+  <DialogContent className="max-w-7xl w-[1400px] h-[740px] flex flex-col p-0 overflow-y-auto text-sm" showCloseButton={false}>
         <DialogHeader className="p-4 pb-2 border-b bg-gradient-to-r from-purple-50 to-blue-50">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-3">
@@ -294,8 +294,8 @@ export function TravelLanguageAssistant({ isOpen, onClose }: { isOpen: boolean, 
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 h-full">
+  <div className="flex-1 min-h-0">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 h-full overflow-y-auto">
             {/* Left Panel - Controls */}
             <div className="space-y-6">
               {/* Connection Status */}
