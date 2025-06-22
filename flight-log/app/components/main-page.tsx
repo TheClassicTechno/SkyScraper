@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from 'next/navigation';
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { TravelLanguageAssistant } from "./ai-translate";
 import { MessageCircle, Languages } from "lucide-react"; // if you want to use these icons
 
 const MainPage = () => {
@@ -205,8 +204,6 @@ const MainPage = () => {
                 </button>
             </div>
 
-            {/* Language Assistant Dialog */}
-            <TravelLanguageAssistant isOpen={showTranslator} onClose={() => setShowTranslator(false)} />
      
         </div>
     )
