@@ -56,7 +56,7 @@ export function AIChatAgent({ flights }: AIChatAgentProps) {
 - Safety protocol guidance
 - Regulatory compliance questions
 
-I can see you currently have ${flights.length} active flights with ${flights.filter((f) => f.riskScore > 60).length} high-risk flights requiring attention. How can I assist you today?`,
+How can I assist you today?`,
       timestamp: new Date(),
     },
   ])
@@ -172,6 +172,10 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
     setTimeout(() => sendMessage(question), 100)
   }
 
+  const closeDialog = () => {
+    setIsOpen(false)
+  }
+
   return (
     <>
       {/* Floating Chat Button */}
@@ -195,7 +199,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-lg h-[700px] flex flex-col p-0">
+        <DialogContent className="max-w-lg h-[700px] flex flex-col p-0" showCloseButton={false}>
           <DialogHeader className="p-4 pb-2 border-b bg-blue-50">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -209,7 +213,7 @@ I can see you currently have ${flights.length} active flights with ${flights.fil
                   </div>
                 </div>
               </DialogTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <Button variant="ghost" size="icon" onClick={closeDialog}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
