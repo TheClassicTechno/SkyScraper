@@ -10,19 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { fetchFlightData } from "../api/aviation-request/route"
 
-const popularAirlines = [
-    { code: "AA", name: "American Airlines", logo: "🇺🇸" },
-    { code: "DL", name: "Delta Air Lines", logo: "🔺" },
-    { code: "UA", name: "United Airlines", logo: "🌐" },
-    { code: "SW", name: "Southwest Airlines", logo: "❤️" },
-    { code: "BA", name: "British Airways", logo: "🇬🇧" },
-    { code: "LH", name: "Lufthansa", logo: "🇩🇪" },
-    { code: "AF", name: "Air France", logo: "🇫🇷" },
-    { code: "KL", name: "KLM", logo: "🇳🇱" },
-    { code: "EK", name: "Emirates", logo: "🇦🇪" },
-    { code: "QR", name: "Qatar Airways", logo: "🇶🇦" },
-]
-
 const MainPage = () => {
     const [flightNumber, setFlightNumber] = useState("")
     const [selectedAirline, setSelectedAirline] = useState("")
@@ -135,28 +122,6 @@ const MainPage = () => {
                             </div>
 
                             <div className="space-y-3 sm:space-y-4">
-                                {/* Airline Selection */}
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700">Select Airline</label>
-                                    <Select value={selectedAirline} onValueChange={setSelectedAirline}>
-                                        <SelectTrigger className="h-10 sm:h-12 text-left">
-                                            <SelectValue placeholder="Choose your airline" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {popularAirlines.map((airline) => (
-                                                <SelectItem key={airline.code} value={airline.code}>
-                                                    <div className="flex items-center gap-2 sm:gap-3">
-                                                        <span className="text-base sm:text-lg">{airline.logo}</span>
-                                                        <div>
-                                                            <div className="font-medium text-sm sm:text-base">{airline.name}</div>
-                                                            <div className="text-xs text-gray-500">{airline.code}</div>
-                                                        </div>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 {/* Flight Number Input */}
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <label className="text-xs sm:text-sm font-medium text-gray-700">Flight Number</label>
@@ -185,7 +150,7 @@ const MainPage = () => {
                                 <Link href="/flight-score">
                                     <Button
                                         onClick={() => fetchFlightData(flightNumber)}
-                                        disabled={!flightNumber || !selectedAirline}
+                                        disabled={!flightNumber}
                                         className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
                                     >
                                         <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
