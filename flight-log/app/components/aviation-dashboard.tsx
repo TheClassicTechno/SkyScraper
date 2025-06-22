@@ -624,7 +624,7 @@ function AIFlightRecommendationsSection({ flights, userProfile }: {
                 </div>
                 <div>
                   <span className="text-blue-600">Options Available:</span>
-                  <div className="font-medium">{aiRecommendations.length} flights</div>
+                  <div className="font-medium">4 flights</div>
                 </div>
               </div>
             </div>
@@ -1089,7 +1089,7 @@ export default function AviationDashboard() {
           </h1>
 
           {/* Available Flights Section */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
               <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
                 <Plane className="h-5 w-5" />
@@ -1116,7 +1116,7 @@ export default function AviationDashboard() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Search and Refresh Section */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
@@ -1226,9 +1226,6 @@ export default function AviationDashboard() {
                       <div>
                         <div className="font-semibold text-lg flex items-center">
                           {flight.id}
-                          {flight.id === 'AA456' && (
-                            <span className="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full font-normal">Scheduled</span>
-                          )}
                         </div>
                         <div className="text-base text-gray-600">
                           {flight.departure} → {flight.arrival}
