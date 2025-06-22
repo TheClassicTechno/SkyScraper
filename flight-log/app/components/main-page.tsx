@@ -193,18 +193,6 @@ const MainPage = () => {
                     </div>
                 </div>
             </footer>
-             {/* Floating Language Assistant Button */}
-            <div className="fixed bottom-6 right-6 z-50">
-                <button
-                    onClick={() => setShowTranslator(true)}
-                    className="h-14 w-14 rounded-full shadow-lg bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105 flex items-center justify-center"
-                    aria-label="Open Language Assistant"
-                >
-                    <Languages className="h-6 w-6 text-white" />
-                </button>
-            </div>
-
-     
         </div>
     )
 }
