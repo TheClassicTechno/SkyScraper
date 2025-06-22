@@ -117,6 +117,8 @@ except ImportError:
 
 # Initialize Flask app
 app = Flask(__name__)
+from flask_cors import CORS
+CORS(app)
 app.config['SECRET_KEY'] = 'flight-communication-streamlined-secret'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -512,8 +514,11 @@ if USE_SPEECH:
 # Flask Routes
 @app.route('/')
 def index():
-    """Main application page"""
-    return render_template('index.html', languages=LANGUAGES, contexts=AVIATION_CONTEXTS)
+    return jsonify({"status": "API running"})
+# @app.route('/')
+# def index():
+#     """Main application page"""
+#     return render_template('index.html', languages=LANGUAGES, contexts=AVIATION_CONTEXTS)
 
 @app.route('/api/languages')
 def get_languages():
@@ -524,6 +529,16 @@ def get_languages():
 def get_contexts():
     """Get aviation contexts"""
     return jsonify(AVIATION_CONTEXTS)
+
+@app.route('/api/translate_text', methods=['POST'])
+def api_translate_text():
+    data = request.get_json()
+    text = data.get('text', '')
+    source_lang = data.get('source_language', 'auto')
+    target_lang = data.get('target_language', 'en')
+    context = data.get('context', 'general')
+    result = translator.translate_text(text, target_lang, source_lang, context)
+    return jsonify(result)
 
 @app.route('/api/status')
 def get_status():

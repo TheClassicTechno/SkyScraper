@@ -129,23 +129,54 @@ export function TravelLanguageAssistant({ isOpen, onClose }: { isOpen: boolean, 
     })
   }
 
-  const handleTextTranslation = () => {
-    if (!inputText.trim()) return
+  // const handleTextTranslation = () => {
+  //   if (!inputText.trim()) return
     
-    const translatedText = getTranslation(inputText, sourceLanguage, textTargetLanguage)
+  //   const translatedText = getTranslation(inputText, sourceLanguage, textTargetLanguage)
     
+  //   addTranslationResult({
+  //     originalText: inputText,
+  //     translatedText: translatedText,
+  //     sourceLanguage: sourceLanguage === "auto" ? "en" : sourceLanguage,
+  //     targetLanguage: textTargetLanguage,
+  //     confidence: 0.95,
+  //     method: "Manual Input",
+  //     type: "Manual Translation"
+  //   })
+    
+  //   setInputText("")
+  // }
+  const handleTextTranslation = async () => {
+  if (!inputText.trim()) return;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/translate_text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: inputText,
+        source_language: sourceLanguage,
+        target_language: textTargetLanguage,
+        context: context
+      }),
+    });
+    const data = await res.json();
+
     addTranslationResult({
       originalText: inputText,
-      translatedText: translatedText,
-      sourceLanguage: sourceLanguage === "auto" ? "en" : sourceLanguage,
-      targetLanguage: textTargetLanguage,
-      confidence: 0.95,
-      method: "Manual Input",
+      translatedText: data.translated_text,
+      sourceLanguage: data.source_language,
+      targetLanguage: data.target_language,
+      confidence: data.confidence || 0.95,
+      method: data.method || "Flask API",
       type: "Manual Translation"
-    })
-    
-    setInputText("")
+    });
+    setInputText("");
+  } catch (err) {
+    // Optionally handle error
+    alert("Translation failed. Please try again.");
   }
+};
 
   const handleDemo = () => {
     const demoData = {
