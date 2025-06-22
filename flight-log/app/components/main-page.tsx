@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { fetchFlightData } from "../api/aviation-request/route"
-
+import FlightButton from "./flight-button"
 import Link from "next/link"
 
 const popularAirlines = [
@@ -184,14 +183,10 @@ const MainPage = () => {
 
                                 {/* Search Button */}
                                 <Link href="/flight-score">
-                                    <Button
-                                        onClick={() => fetchFlightData(flightNumber)}
-                                        disabled={!flightNumber || !selectedAirline}
-                                        className="w-full h-10 sm:h-12 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200"
-                                    >
-                                        <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                                        Track Flight
-                                    </Button>
+                                    <FlightButton
+                                        flightNumber={flightNumber}
+                                        selectedAirline={selectedAirline}
+                                    />
                                 </Link>
 
                                 {/* Quick Access Button */}
